@@ -1,4 +1,4 @@
-import { ReactNode, useRef } from 'react';
+import { type ReactNode, type CSSProperties, useRef } from 'react';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { useInView } from '../hooks/useInView';
 
@@ -50,10 +50,11 @@ export function SectionHeading({ eyebrow, title, subtitle, align = 'left', light
 interface Card3DProps {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
   intensity?: number;
 }
 
-export function Card3D({ children, className = '', intensity = 8 }: Card3DProps) {
+export function Card3D({ children, className = '', style, intensity = 8 }: Card3DProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -78,7 +79,7 @@ export function Card3D({ children, className = '', intensity = 8 }: Card3DProps)
   return (
     <motion.div
       ref={cardRef}
-      style={{ rotateX, rotateY, transformStyle: 'preserve-3d', transformPerspective: 800 }}
+      style={{ rotateX, rotateY, transformStyle: 'preserve-3d', transformPerspective: 800, ...style }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       whileHover={{ scale: 1.02 }}
