@@ -43,7 +43,7 @@ const STORY_BEATS = [
     to: 0.88,
     tag: 'Two Paths Forward',
     headline: 'Sell the parts. Or let us recycle them properly.',
-    sub: 'EcoCircuit connects you to certified buyers & zero-waste processors in Delhi NCR.',
+    sub: 'EcoCircuit connects the LPU community with responsible collection points and authorized recyclers in the Phagwara–Jalandhar area.',
     accent: 'var(--moss)',
   },
   {
@@ -52,7 +52,7 @@ const STORY_BEATS = [
     to: 1.0,
     tag: 'Your Turn',
     headline: 'One device. Endless second chances.',
-    sub: 'Schedule a free pickup and we handle the rest — safely, transparently.',
+    sub: 'Request a collection for your hostel or department and we handle the rest safely.',
     accent: 'var(--copper)',
   },
 ];
