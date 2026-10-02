@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2, ArrowRight, ArrowLeft, Calendar, Clock, MapPin,
   User, Mail, Phone, AlertTriangle, Copy, Check, Truck,
-  ShieldCheck, Scale, Building2, Layers,
+  ShieldCheck, Scale, Building2,
   Monitor, Smartphone, Battery, Refrigerator, Cpu, Lightbulb, Cable
 } from 'lucide-react';
 import { SectionHeading, Reveal } from '../components/ui';
