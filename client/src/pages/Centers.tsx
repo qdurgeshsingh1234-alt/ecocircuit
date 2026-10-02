@@ -140,23 +140,26 @@ function MapController({
   zoom: number;
 }) {
   const map = useMap();
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
-    if (
-      target &&
-      Number.isFinite(target[0]) &&
-      Number.isFinite(target[1])
-    ) {
-      try {
-        const size = map.getSize();
-        if (size && size.x > 0 && size.y > 0) {
-          map.flyTo(target, zoom, { duration: 1.0, easeLinearity: 0.25 });
-        } else {
-          map.setView(target, zoom);
-        }
-      } catch {
+    if (!target || !Number.isFinite(target[0]) || !Number.isFinite(target[1])) return;
+
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      map.setView(target, zoom);
+      return;
+    }
+
+    try {
+      const size = map.getSize();
+      if (size && size.x > 0 && size.y > 0) {
+        map.flyTo(target, zoom, { duration: 1.0, easeLinearity: 0.25 });
+      } else {
         map.setView(target, zoom);
       }
+    } catch {
+      map.setView(target, zoom);
     }
   }, [target, zoom, map]);
 
@@ -167,12 +170,15 @@ function MapController({
     window.addEventListener('resize', handleResize);
     const timer = setTimeout(() => {
       map.invalidateSize();
-    }, 200);
+      if (target && Number.isFinite(target[0]) && Number.isFinite(target[1])) {
+        map.setView(target, zoom);
+      }
+    }, 150);
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(timer);
     };
-  }, [map]);
+  }, [map, target, zoom]);
 
   return null;
 }
