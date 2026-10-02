@@ -87,8 +87,37 @@ body::after {
 
 .leaflet-container {
   z-index: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   font-family: var(--font-body);
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--sand) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(20, 23, 15, 0.2), 0 8px 10px -6px rgba(20, 23, 15, 0.1) !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.5 !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--paper) !important;
+}
+
+.custom-map-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+.pin-selected {
+  filter: drop-shadow(0 6px 12px rgba(47, 78, 58, 0.4)) !important;
+  z-index: 1000 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
