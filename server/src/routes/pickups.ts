@@ -12,6 +12,14 @@ const CATEGORY_WEIGHT_KG: Record<string, number> = {
   'Batteries': 0.5,
   'Lighting': 0.3,
   'Cables & Peripherals': 1.0,
+  'Mobiles & Accessories': 1.2,
+  'it-equipment': 4.5,
+  'large-appliances': 30.0,
+  'small-appliances': 2.0,
+  'batteries': 0.5,
+  'lighting': 0.3,
+  'cables-peripherals': 1.0,
+  'mobiles-accessories': 1.2,
 };
 
 const QUANTITY_MULTIPLIERS: Record<string, number> = {
