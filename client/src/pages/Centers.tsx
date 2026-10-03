@@ -569,22 +569,22 @@ export default function Centers() {
             </div>
           </div>
 
-          {/* ── LIST COLUMN: Order 2 on mobile, Order 1 on desktop ───────── */}
-          <div className="order-2 lg:order-1 col-span-1 lg:col-span-7 xl:col-span-7 space-y-4">
+          {/* ── LIST COLUMN: Wide, scrollable, floating glass container (backdrop-blur-xl bg-paper/90 shadow-2xl) ── */}
+          <div className="order-2 lg:order-1 col-span-1 lg:col-span-7 xl:col-span-7 rounded-3xl border border-[var(--sand)] backdrop-blur-xl bg-[color-mix(in_srgb,var(--paper)_92%,transparent)] shadow-2xl p-4 sm:p-6 lg:max-h-[calc(100vh-8.5rem)] lg:min-h-[580px] lg:overflow-y-auto space-y-4">
 
             {/* Result count & active filter summary */}
-            <div className="flex items-center justify-between px-1">
-              <p className="text-xs font-medium text-[var(--ink)]/60">
+            <div className="flex items-center justify-between px-1 pb-1 border-b border-[var(--sand)]/60">
+              <p className="text-xs font-semibold text-[var(--ink)]/75">
                 {loading
-                  ? 'Finding collection points…'
-                  : `Showing ${filteredCenters.length} drop-off ${
+                  ? 'Locating collection points…'
+                  : `Showing ${filteredCenters.length} campus drop-off ${
                       filteredCenters.length === 1 ? 'point' : 'points'
                     } sorted by distance`}
               </p>
               {(categoryParam !== 'all' || typeFilter !== 'all' || searchQuery) && (
                 <button
                   onClick={handleResetAllFilters}
-                  className="text-xs text-[var(--copper)] hover:underline inline-flex items-center gap-1 font-medium"
+                  className="text-xs text-[var(--copper)] hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                 >
                   <RotateCcw size={12} /> Reset filters
                 </button>
@@ -597,7 +597,7 @@ export default function Centers() {
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="p-6 rounded-2xl border border-[var(--sand)] bg-[var(--paper)] animate-pulse space-y-4"
+                    className="p-6 rounded-2xl border border-[var(--sand)] bg-white/70 animate-pulse space-y-4"
                   >
                     <div className="flex gap-2">
                       <div className="h-5 w-24 bg-[var(--sand)] rounded-md" />
@@ -619,7 +619,7 @@ export default function Centers() {
                 <p className="text-xs text-[var(--ink)]/60 max-w-md mx-auto">{error}</p>
                 <button
                   onClick={fetchCenters}
-                  className="px-4 py-2 rounded-lg text-xs font-medium bg-[var(--copper)] text-[var(--paper)] hover:bg-[#a05626] transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-medium bg-[var(--copper)] text-[var(--paper)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                 >
                   Retry request
                 </button>
@@ -628,22 +628,24 @@ export default function Centers() {
 
             {/* Empty state */}
             {!loading && !error && filteredCenters.length === 0 && (
-              <div className="p-12 rounded-2xl border border-[var(--sand)] bg-[var(--sand)]/20 text-center space-y-4">
+              <div className="p-12 rounded-2xl border border-[var(--sand)] bg-white/50 text-center space-y-4">
                 <Compass size={40} className="mx-auto text-[var(--ink)]/30" />
-                <h3 className="text-base font-semibold text-[var(--ink)]">No drop-off points found</h3>
+                <h3 className="text-base font-semibold text-[var(--ink)]" style={{ fontFamily: 'var(--font-heading)' }}>
+                  No drop-off points found
+                </h3>
                 <p className="text-xs text-[var(--ink)]/60 max-w-sm mx-auto">
                   No collection points match the current filters. Try selecting "All items" or clearing your search term.
                 </p>
                 <button
                   onClick={handleResetAllFilters}
-                  className="px-4 py-2 rounded-lg text-xs font-medium bg-[var(--moss)] text-[var(--paper)] hover:bg-[#253e2e] transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-medium bg-[var(--moss)] text-[var(--paper)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                 >
                   Reset all filters
                 </button>
               </div>
             )}
 
-            {/* Centers list */}
+            {/* Centers list: Distinct elevated cards */}
             {!loading && !error && filteredCenters.length > 0 && (
               <div className="space-y-4">
                 {filteredCenters.map((center) => {
@@ -656,16 +658,16 @@ export default function Centers() {
                       key={center._id}
                       id={`center-card-${center._id}`}
                       onClick={() => handleSelectFromList(center)}
-                      className={`group p-5 sm:p-6 rounded-2xl border transition-all duration-200 cursor-pointer ${
+                      className={`group p-5 rounded-2xl border transition-all duration-200 cursor-pointer ${
                         isSelected
-                          ? 'border-[var(--moss)] bg-[var(--paper)] shadow-lg ring-2 ring-[var(--moss)]/20'
-                          : 'border-[var(--sand)] bg-[var(--paper)] hover:border-[var(--moss)]/40 hover:shadow-md'
+                          ? 'border-[var(--moss)] bg-white shadow-xl ring-2 ring-[var(--moss)]/30 scale-[1.01]'
+                          : 'border-[var(--sand)]/80 bg-white/90 hover:bg-white hover:border-[var(--moss)]/50 hover:shadow-md'
                       }`}
                     >
                       {/* Top badge row: Type, Sample data, Distance */}
-                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <div className="flex flex-wrap items-center gap-2 mb-2.5">
                         <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold"
                           style={{
                             backgroundColor: typeCfg.bg,
                             color: typeCfg.color,
@@ -676,45 +678,51 @@ export default function Centers() {
                           {typeCfg.label}
                         </span>
 
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[var(--copper)]/10 text-[var(--copper)] border border-[var(--copper)]/25">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--copper)]/10 text-[var(--copper)] border border-[var(--copper)]/20">
                           Sample data
                         </span>
 
-                        <span className="ml-auto text-xs font-medium text-[var(--moss)] bg-[var(--moss)]/8 px-2.5 py-1 rounded-md border border-[var(--moss)]/15 flex items-center gap-1">
+                        <span className="ml-auto text-xs font-semibold text-[var(--moss)] bg-[var(--moss)]/10 px-2.5 py-0.5 rounded-lg border border-[var(--moss)]/20 flex items-center gap-1">
                           <Navigation size={11} />
                           {formatDistance(center.distanceKm)}
                         </span>
                       </div>
 
-                      {/* Center Name */}
-                      <h3 className="text-base sm:text-lg font-semibold text-[var(--ink)] group-hover:text-[var(--moss)] transition-colors">
+                      {/* Prominent Center Name */}
+                      <h3
+                        className="text-base sm:text-lg font-semibold tracking-tight text-[var(--ink)] group-hover:text-[var(--moss)] transition-colors"
+                        style={{ fontFamily: 'var(--font-heading)' }}
+                      >
                         {center.name}
                       </h3>
 
-                      {/* Address */}
-                      <p className="mt-1.5 text-xs sm:text-sm text-[var(--ink)]/65 flex items-start gap-1.5 leading-relaxed">
-                        <MapPin size={14} className="shrink-0 mt-0.5 text-[var(--copper)]" />
-                        <span>{center.address}</span>
-                      </p>
+                      {/* Info Rows: Address and Hours */}
+                      <div className="mt-2.5 space-y-1.5 text-xs text-[var(--ink)]/70">
+                        <div className="flex items-start gap-2">
+                          <MapPin size={14} className="shrink-0 mt-0.5 text-[var(--copper)]" />
+                          <span className="leading-relaxed font-medium">{center.address}</span>
+                        </div>
 
-                      {/* Hours */}
-                      <p className="mt-2 text-xs text-[var(--ink)]/55 flex items-center gap-1.5">
-                        <Clock size={13} className="shrink-0 text-[var(--ink)]/40" />
-                        <span>{center.hours}</span>
-                      </p>
+                        <div className="flex items-center gap-2">
+                          <Clock size={13} className="shrink-0 text-[var(--signal)]" />
+                          <span>{center.hours}</span>
+                        </div>
+                      </div>
 
-                      {/* Accepted categories chips */}
-                      <div className="mt-4 pt-3 border-t border-[var(--sand)]/70">
-                        <p className="text-[11px] font-medium text-[var(--ink)]/50 uppercase tracking-wider mb-2">
-                          Accepted e-waste categories:
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
+                      {/* Accepted categories: Horizontal scrolling pills */}
+                      <div className="mt-3.5 pt-2.5 border-t border-[var(--sand)]/60">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-[10px] font-bold text-[var(--ink)]/50 uppercase tracking-wider shrink-0">
+                            Accepted categories:
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                           {center.categories.map((catSlug) => {
                             const info = categoryMap.get(catSlug);
                             return (
                               <span
                                 key={catSlug}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-[var(--sand)]/60 text-[var(--ink)]/80 border border-[var(--sand)]"
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[var(--sand)]/50 text-[var(--ink)]/80 border border-[var(--sand)] shrink-0"
                               >
                                 <span
                                   className="w-1.5 h-1.5 rounded-full"
@@ -727,15 +735,15 @@ export default function Centers() {
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="mt-5 flex flex-wrap items-center gap-2.5 pt-3 border-t border-[var(--sand)]/50">
+                      {/* Actions Row */}
+                      <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-[var(--sand)]/50">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleSelectFromList(center);
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--moss)] text-[var(--paper)] hover:bg-[#253e2e] transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[var(--moss)] text-[var(--paper)] transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-xs"
                         >
                           <Compass size={13} /> Focus on map
                         </button>
@@ -745,7 +753,7 @@ export default function Centers() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--sand)]/80 text-[var(--ink)] hover:bg-[var(--sand)] border border-[var(--sand)] transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white text-[var(--ink)] hover:bg-[var(--sand)]/40 border border-[var(--sand)] transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                         >
                           <ExternalLink size={13} /> Get directions
                         </a>
@@ -753,9 +761,9 @@ export default function Centers() {
                         <Link
                           to={`/pickup?category=${center.categories[0] || ''}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--copper)]/12 text-[var(--copper)] hover:bg-[var(--copper)]/20 border border-[var(--copper)]/25 transition-colors ml-auto"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[var(--copper)] text-[var(--paper)] transition hover:scale-[1.02] active:scale-[0.98] ml-auto shadow-xs"
                         >
-                          <Calendar size={13} /> Request collection
+                          <Calendar size={13} /> Schedule Pickup
                         </Link>
                       </div>
 
