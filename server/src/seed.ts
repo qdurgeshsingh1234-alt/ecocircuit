@@ -98,12 +98,36 @@ const pickupData = [
     categories: ['it-equipment', 'cables-peripherals'],
     quantity: '3–5 items (light)',
     address: 'Boys Hostel BH-6, Room 204, LPU Campus (Sample)',
-    preferredWindow: '2024-12-07, Morning (9 AM – 1 PM)',
+    preferredWindow: '2024-10-12, Morning (9 AM – 1 PM)',
     contactName: 'Arjun Sharma (Sample)',
     contactEmail: 'sample.student1@lpu.in',
     contactPhone: '+91-XXXXX-XXXXX',
     status: 'collected' as const,
     estimatedImpactKg: 12.5,
+  },
+  {
+    trackingId: 'ECO-2024-004',
+    categories: ['mobiles-accessories', 'batteries'],
+    quantity: '1–2 items',
+    address: 'Boys Hostel BH-6, Room 204, LPU Campus (Sample)',
+    preferredWindow: '2024-11-08, Afternoon (1 PM – 5 PM)',
+    contactName: 'Arjun Sharma (Sample)',
+    contactEmail: 'sample.student1@lpu.in',
+    contactPhone: '+91-XXXXX-XXXXX',
+    status: 'collected' as const,
+    estimatedImpactKg: 6.8,
+  },
+  {
+    trackingId: 'ECO-2024-005',
+    categories: ['cables-peripherals', 'small-appliances'],
+    quantity: '5+ items (mixed)',
+    address: 'Boys Hostel BH-6, Room 204, LPU Campus (Sample)',
+    preferredWindow: '2024-12-07, Morning (9 AM – 1 PM)',
+    contactName: 'Arjun Sharma (Sample)',
+    contactEmail: 'sample.student1@lpu.in',
+    contactPhone: '+91-XXXXX-XXXXX',
+    status: 'scheduled' as const,
+    estimatedImpactKg: 18.4,
   },
   {
     trackingId: 'ECO-2024-002',
@@ -137,9 +161,8 @@ export async function seedDatabase(): Promise<void> {
   await Center.insertMany(centerData);
   console.log(`   → Seeded ${centerData.length} collection centers`);
 
-  const pickupCount = await Pickup.countDocuments();
-  if (pickupCount === 0) {
-    await Pickup.insertMany(pickupData);
-    console.log(`   → Seeded ${pickupData.length} sample pickups`);
-  }
+  // Always refresh pickups to maintain sample dataset
+  await Pickup.deleteMany({});
+  await Pickup.insertMany(pickupData);
+  console.log(`   → Seeded ${pickupData.length} sample pickups`);
 }
