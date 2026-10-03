@@ -11,7 +11,7 @@ import { SectionHeading, Reveal } from '../components/ui';
 import { CATEGORIES } from '../data/categories';
 
 // ── Category Icon Map ─────────────────────────────────────────────────────────
-const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>> = {
   'it-equipment': Monitor,
   'mobiles-accessories': Smartphone,
   'batteries': Battery,
@@ -332,14 +332,16 @@ export default function Pickup() {
         {/* ── Progress Indicators Bar (Steps 1 to 5) ───────────────────── */}
         {currentStep <= 5 && (
           <Reveal delay={0.05}>
-            <div className="mb-10 p-4 sm:p-5 rounded-2xl bg-[var(--sand)]/30 border border-[var(--sand)]">
+            <div className="mb-10 p-4 sm:p-5 rounded-2xl backdrop-blur-xl bg-white/80 border border-[var(--sand)] shadow-lg shadow-[var(--moss)]/5 relative">
               <div className="relative flex items-center justify-between">
                 {/* Connecting background line */}
-                <div className="absolute top-1/2 left-4 right-4 -translate-y-1/2 h-0.5 bg-[var(--sand)] -z-0" />
+                <div className="absolute top-1/2 left-4 right-4 -translate-y-1/2 h-1 bg-[var(--sand)]/60 rounded-full -z-0" />
                 {/* Connecting active filled line */}
-                <div
-                  className="absolute top-1/2 left-4 -translate-y-1/2 h-0.5 bg-[var(--moss)] -z-0 transition-all duration-300"
-                  style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 92}%` }}
+                <motion.div
+                  className="absolute top-1/2 left-4 -translate-y-1/2 h-1 rounded-full bg-gradient-to-r from-[var(--moss)] via-[var(--copper)] to-[var(--copper)] -z-0 shadow-[0_0_12px_rgba(181,101,45,0.4)]"
+                  initial={false}
+                  animate={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 92}%` }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 28 }}
                 />
 
                 {STEPS.map((s) => {
@@ -351,24 +353,27 @@ export default function Pickup() {
                       key={s.id}
                       className="relative z-10 flex flex-col items-center group cursor-default"
                     >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                      <motion.div
+                        initial={false}
+                        animate={{ scale: isCurrent ? 1.15 : 1 }}
+                        transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
                           isCompleted
-                            ? 'bg-[var(--moss)] text-[var(--paper)] shadow-xs'
+                            ? 'bg-[var(--moss)] text-[var(--paper)] shadow-[0_0_10px_rgba(47,78,58,0.3)] ring-2 ring-[var(--moss)]/30'
                             : isCurrent
-                            ? 'bg-[var(--copper)] text-[var(--paper)] ring-4 ring-[var(--copper)]/20 scale-105'
-                            : 'bg-[var(--sand)] text-[var(--ink)]/50'
+                            ? 'bg-[var(--copper)] text-[var(--paper)] ring-4 ring-[var(--copper)]/30 shadow-[0_0_18px_rgba(181,101,45,0.45)]'
+                            : 'bg-white text-[var(--ink)]/40 border border-[var(--sand)]'
                         }`}
                       >
                         {isCompleted ? <Check size={14} strokeWidth={2.5} /> : s.id}
-                      </div>
+                      </motion.div>
                       <span
-                        className={`mt-1.5 text-[11px] font-medium hidden sm:block ${
+                        className={`mt-1.5 text-[11px] tracking-tight hidden sm:block ${
                           isCurrent
-                            ? 'text-[var(--ink)] font-semibold'
+                            ? 'text-[var(--ink)] font-bold'
                             : isCompleted
-                            ? 'text-[var(--moss)]'
-                            : 'text-[var(--ink)]/40'
+                            ? 'text-[var(--moss)] font-medium'
+                            : 'text-[var(--ink)]/40 font-normal'
                         }`}
                       >
                         {s.name}
@@ -413,8 +418,8 @@ export default function Pickup() {
                   </div>
                 )}
 
-                {/* Category Selection Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Category Selection Grid: Large Clickable Tile Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
                   {CATEGORIES.map((cat) => {
                     const isSelected = selectedCategories.includes(cat.slug);
                     const IconComp = CATEGORY_ICON_MAP[cat.slug] || Cpu;
@@ -423,45 +428,55 @@ export default function Pickup() {
                       <div
                         key={cat.slug}
                         onClick={() => toggleCategory(cat.slug)}
-                        className={`p-4 rounded-xl border transition-all duration-150 cursor-pointer flex items-start gap-3.5 select-none ${
+                        className={`relative p-4 sm:p-5 rounded-2xl flex flex-col items-center text-center justify-between min-h-[160px] transition-all duration-200 cursor-pointer select-none group ${
                           isSelected
-                            ? 'border-[var(--moss)] bg-[var(--moss)]/8 shadow-xs ring-1 ring-[var(--moss)]/30'
-                            : 'border-[var(--sand)] bg-[var(--sand)]/20 hover:border-[var(--moss)]/30 hover:bg-[var(--sand)]/40'
+                            ? 'border-2 border-[var(--copper)] bg-white shadow-[0_0_24px_rgba(181,101,45,0.22)] ring-4 ring-[var(--copper)]/20 scale-[1.03]'
+                            : 'border border-[var(--sand)] bg-white/75 hover:bg-white hover:border-[var(--copper)]/40 hover:scale-105 shadow-xs'
                         }`}
                       >
+                        {/* Top-right selection pill indicator */}
                         <div
-                          className={`w-5 h-5 rounded-md mt-0.5 flex items-center justify-center shrink-0 border transition-all ${
+                          className={`absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
                             isSelected
-                              ? 'bg-[var(--moss)] border-[var(--moss)] text-[var(--paper)]'
-                              : 'border-[var(--sand)] bg-[var(--paper)]'
+                              ? 'bg-[var(--copper)] text-white shadow-xs scale-100'
+                              : 'bg-[var(--sand)]/30 text-transparent scale-90 opacity-0 group-hover:opacity-40'
                           }`}
                         >
-                          {isSelected && <Check size={12} strokeWidth={3} />}
+                          <Check size={11} strokeWidth={3} />
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <IconComp
-                              size={16}
-                              className={isSelected ? 'text-[var(--moss)]' : 'text-[var(--ink)]/60'}
-                            />
-                            <h4 className="text-sm font-semibold text-[var(--ink)]">
-                              {cat.name}
-                            </h4>
-                          </div>
-                          <p className="mt-1 text-[11px] text-[var(--ink)]/55 leading-relaxed line-clamp-2">
-                            {cat.examples.slice(0, 4).join(', ')}…
-                          </p>
-                          <span
-                            className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded"
-                            style={{
-                              backgroundColor: cat.color + '15',
-                              color: cat.color,
-                            }}
-                          >
-                            {cat.riskLabel}
-                          </span>
+                        {/* Large Icon Container */}
+                        <div
+                          className={`w-13 h-13 rounded-2xl flex items-center justify-center transition-all duration-200 mt-1 ${
+                            isSelected
+                              ? 'bg-[var(--copper)]/12 text-[var(--copper)] shadow-inner'
+                              : 'bg-[var(--sand)]/30 text-[var(--ink)]/60 group-hover:text-[var(--copper)] group-hover:bg-[var(--copper)]/8'
+                          }`}
+                        >
+                          <IconComp size={26} strokeWidth={1.8} />
                         </div>
+
+                        {/* Centered Title & Details */}
+                        <div className="my-2 text-center w-full">
+                          <h4 className="text-sm font-semibold text-[var(--ink)] tracking-tight leading-tight">
+                            {cat.name}
+                          </h4>
+                          <p className="mt-1 text-[11px] text-[var(--ink)]/50 leading-tight line-clamp-1">
+                            {cat.examples.slice(0, 2).join(', ')}
+                          </p>
+                        </div>
+
+                        {/* Risk / category tag badge */}
+                        <span
+                          className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full"
+                          style={{
+                            backgroundColor: isSelected ? 'rgba(181,101,45,0.1)' : 'rgba(20,23,15,0.05)',
+                            color: isSelected ? 'var(--copper)' : 'var(--ink)',
+                            opacity: isSelected ? 1 : 0.65,
+                          }}
+                        >
+                          {cat.riskLabel}
+                        </span>
                       </div>
                     );
                   })}
@@ -522,17 +537,17 @@ export default function Pickup() {
                 )}
 
                 {/* Quantity selection radio cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   {QUANTITY_OPTIONS.map((opt) => {
                     const isSelected = quantity === opt.id;
                     return (
                       <div
                         key={opt.id}
                         onClick={() => setQuantity(opt.id)}
-                        className={`p-4 rounded-xl border transition-all duration-150 cursor-pointer flex items-start gap-3 select-none ${
+                        className={`p-4 rounded-xl transition-all duration-200 cursor-pointer flex items-start gap-3.5 select-none ${
                           isSelected
-                            ? 'border-[var(--copper)] bg-[var(--copper)]/8 shadow-xs ring-1 ring-[var(--copper)]/30'
-                            : 'border-[var(--sand)] bg-[var(--sand)]/20 hover:border-[var(--copper)]/30 hover:bg-[var(--sand)]/40'
+                            ? 'border-2 border-[var(--copper)] bg-white shadow-[0_0_20px_rgba(181,101,45,0.18)] ring-4 ring-[var(--copper)]/20 scale-[1.02]'
+                            : 'border border-[var(--sand)] bg-white/70 hover:bg-white hover:border-[var(--copper)]/30 hover:scale-[1.01] shadow-xs'
                         }`}
                       >
                         <span className="text-2xl shrink-0 mt-0.5">{opt.icon}</span>
