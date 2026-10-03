@@ -282,7 +282,7 @@ const CHECKLIST_ITEMS = [
   { n: '07', title: 'Insulate loose terminal leads', detail: 'Affix electrical tape over 9V, lithium cell, or battery pack contact points to prevent short circuits.' },
 ];
 
-function InteractiveChecklist() {
+function StickyChecklistCard() {
   const [checkedSteps, setCheckedSteps] = useState<Record<string, boolean>>({});
 
   const toggleStep = (n: string) => {
@@ -293,273 +293,123 @@ function InteractiveChecklist() {
   const progressPercent = Math.round((totalChecked / CHECKLIST_ITEMS.length) * 100);
 
   return (
-    <div className="space-y-6">
-      {/* Interactive Progress tracker banner */}
-      <div
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border p-5 backdrop-blur-md"
-        style={{
-          background: 'color-mix(in srgb, var(--sand) 40%, var(--paper))',
-          borderColor: 'var(--sand)',
-        }}
-      >
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--moss)]">
-            Pre-Collection Verification Tool
-          </span>
-          <h4
-            className="text-lg font-semibold tracking-tight text-[var(--ink)]"
-            style={{ fontFamily: 'var(--font-heading)' }}
+    <div
+      className="lg:sticky lg:top-24 rounded-3xl border p-6 shadow-2xl backdrop-blur-xl space-y-5"
+      style={{
+        background: 'linear-gradient(165deg, color-mix(in srgb, var(--moss) 12%, var(--paper)) 0%, color-mix(in srgb, var(--sand) 40%, var(--paper)) 100%)',
+        borderColor: 'color-mix(in srgb, var(--moss) 30%, transparent)',
+        boxShadow: '0 20px 45px -15px rgba(47, 78, 58, 0.12)',
+      }}
+    >
+      {/* Header */}
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{
+              background: 'color-mix(in srgb, var(--copper) 18%, transparent)',
+              color: 'var(--copper)',
+            }}
           >
-            Verify your gear before drop-off
-          </h4>
-          <p className="text-xs opacity-60">
-            Click each milestone as you prepare your electronics.
-          </p>
+            Universal Protocol
+          </span>
+          <span className="text-xs font-semibold" style={{ color: 'var(--moss)' }}>
+            {totalChecked}/{CHECKLIST_ITEMS.length} verified
+          </span>
         </div>
+        <h3
+          className="text-xl font-semibold tracking-tight text-[var(--ink)]"
+          style={{ fontFamily: 'var(--font-heading)' }}
+        >
+          Before you hand anything in
+        </h3>
+        <p className="text-xs opacity-65 mt-1 leading-relaxed" style={{ color: 'var(--ink)' }}>
+          7 critical privacy and safety steps for campus drop-off points and hostel collectors.
+        </p>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <span className="text-sm font-semibold" style={{ color: 'var(--moss)' }}>
-              {totalChecked} of {CHECKLIST_ITEMS.length} completed
-            </span>
-            <div className="w-36 h-2 rounded-full overflow-hidden bg-black/10 mt-1">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: 'var(--moss)' }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              />
-            </div>
-          </div>
-          {totalChecked === CHECKLIST_ITEMS.length && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--moss)] text-[var(--paper)] shadow-md"
-            >
-              <Check size={16} />
-            </motion.div>
-          )}
+        {/* Live progress track */}
+        <div className="mt-3.5 h-2 w-full rounded-full overflow-hidden bg-black/10">
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: 'var(--moss)' }}
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+          />
         </div>
       </div>
 
-      {/* Checklist grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* 7 Interactive Checklist Items */}
+      <div className="space-y-2 max-h-[48vh] overflow-y-auto pr-1">
         {CHECKLIST_ITEMS.map((step) => {
           const isDone = !!checkedSteps[step.n];
           return (
             <motion.div
               key={step.n}
-              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => toggleStep(step.n)}
-              className="cursor-pointer rounded-2xl border p-5 transition-all select-none relative overflow-hidden"
+              className="cursor-pointer rounded-xl border p-3 transition-all select-none"
               style={{
                 background: isDone
-                  ? 'color-mix(in srgb, var(--moss) 8%, var(--paper))'
-                  : 'var(--paper)',
-                borderColor: isDone ? 'var(--moss)' : 'var(--sand)',
-                boxShadow: isDone
-                  ? '0 8px 20px -8px rgba(47, 78, 58, 0.2)'
-                  : '0 2px 8px -2px rgba(20, 23, 15, 0.04)',
+                  ? 'color-mix(in srgb, var(--moss) 14%, var(--paper))'
+                  : 'rgba(255, 255, 255, 0.65)',
+                borderColor: isDone ? 'var(--moss)' : 'color-mix(in srgb, var(--sand) 80%, transparent)',
               }}
             >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold transition-colors"
-                    style={{
-                      background: isDone ? 'var(--moss)' : 'var(--sand)',
-                      color: isDone ? 'var(--paper)' : 'var(--ink)',
-                    }}
-                  >
-                    {step.n}
-                  </span>
-                  <h4 className="text-sm font-semibold tracking-tight text-[var(--ink)]">
-                    {step.title}
-                  </h4>
-                </div>
-                <div
-                  className="flex h-5 w-5 items-center justify-center rounded-md border transition-colors shrink-0 mt-0.5"
+              <div className="flex items-start gap-2.5">
+                <span
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold mt-0.5"
                   style={{
-                    borderColor: isDone ? 'var(--moss)' : 'var(--sand)',
-                    background: isDone ? 'var(--moss)' : 'transparent',
-                    color: '#fff',
+                    background: isDone ? 'var(--moss)' : 'var(--copper)',
+                    color: 'var(--paper)',
                   }}
                 >
-                  {isDone && <Check size={12} />}
+                  {isDone ? <Check size={11} /> : step.n}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h5
+                    className={`text-xs font-semibold leading-tight transition-all ${
+                      isDone ? 'line-through opacity-50' : 'text-[var(--ink)]'
+                    }`}
+                  >
+                    {step.title}
+                  </h5>
+                  <p className="text-[11px] opacity-60 leading-relaxed mt-0.5">
+                    {step.detail}
+                  </p>
                 </div>
               </div>
-              <p className="text-xs opacity-65 leading-relaxed pl-9" style={{ color: 'var(--ink)' }}>
-                {step.detail}
-              </p>
             </motion.div>
           );
         })}
       </div>
-    </div>
-  );
-}
 
-// ── Category Accordion Component ──────────────────────────────────────────────
-function CategoryAccordion({
-  category,
-  isOpen,
-  onToggle,
-}: {
-  category: CategoryInfo;
-  isOpen: boolean;
-  onToggle: () => void;
-}) {
-  const Icon = ICON_MAP[category.icon] ?? Cpu;
-  return (
-    <motion.div
-      layout
-      className={`rounded-2xl border overflow-hidden transition-all ${
-        isOpen
-          ? 'border-[var(--signal)] shadow-lg shadow-[var(--ink)]/5'
-          : 'border-[var(--sand)] hover:border-[var(--signal)]/40 hover:shadow-sm'
-      } bg-[var(--paper)]`}
-    >
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-4 p-5 text-left group transition-colors"
-      >
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105"
+      {/* Action Footer */}
+      <div className="pt-3 border-t space-y-2" style={{ borderColor: 'color-mix(in srgb, var(--moss) 15%, transparent)' }}>
+        <Link
+          to="/pickup"
+          className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold shadow-sm transition hover:scale-[1.02] active:scale-[0.98]"
           style={{
-            backgroundColor: isOpen ? `${category.color}25` : `${category.color}12`,
-            color: category.color,
+            background: 'var(--copper)',
+            color: 'var(--paper)',
           }}
         >
-          <Icon size={22} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3
-              className="text-base font-semibold text-[var(--ink)]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              {category.name}
-            </h3>
-            <span
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium border"
-              style={{
-                backgroundColor: `${category.color}12`,
-                color: category.color,
-                borderColor: `${category.color}30`,
-              }}
-            >
-              <AlertTriangle size={10} />
-              {category.riskLabel}
-            </span>
-          </div>
-          <p className="text-xs opacity-50 mt-0.5 truncate" style={{ color: 'var(--ink)' }}>
-            {category.examples.slice(0, 5).join(', ')}…
-          </p>
-        </div>
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.25 }}
-          className="shrink-0 text-[var(--ink)]/40"
+          <Calendar size={13} />
+          <span>Book Hostel Collection</span>
+        </Link>
+        <Link
+          to="/centers"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-xs font-medium transition hover:bg-black/5"
+          style={{
+            borderColor: 'var(--sand)',
+            color: 'var(--ink)',
+            opacity: 0.8,
+          }}
         >
-          <ChevronDown size={20} />
-        </motion.div>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            key="body"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <div className="px-5 pb-6 space-y-4 border-t border-[var(--sand)] pt-4">
-              {/* Examples */}
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider opacity-50 mb-2">
-                  Recognized Items In This Category
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {category.examples.map((ex) => (
-                    <span
-                      key={ex}
-                      className="px-2.5 py-1 text-xs rounded-lg border font-medium"
-                      style={{
-                        background: 'color-mix(in srgb, var(--sand) 30%, var(--paper))',
-                        borderColor: 'var(--sand)',
-                        color: 'var(--ink)',
-                      }}
-                    >
-                      {ex}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Hazard explanation */}
-              <div
-                className="p-4 rounded-xl border text-xs"
-                style={{
-                  background: 'color-mix(in srgb, var(--rust) 6%, var(--paper))',
-                  borderColor: 'color-mix(in srgb, var(--rust) 20%, transparent)',
-                }}
-              >
-                <p className="font-semibold text-[var(--rust)] mb-1 flex items-center gap-1.5">
-                  <ShieldAlert size={14} /> Environmental & Health Risk Profile
-                </p>
-                <p className="leading-relaxed opacity-80" style={{ color: 'var(--ink)' }}>
-                  {category.hazardDetails}
-                </p>
-              </div>
-
-              {/* Hand-in actions */}
-              <div
-                className="p-4 rounded-xl border text-xs"
-                style={{
-                  background: 'color-mix(in srgb, var(--moss) 6%, var(--paper))',
-                  borderColor: 'color-mix(in srgb, var(--moss) 20%, transparent)',
-                }}
-              >
-                <p className="font-semibold text-[var(--moss)] mb-1 flex items-center gap-1.5">
-                  <CheckCircle2 size={14} /> Safe Preparation Protocol
-                </p>
-                <p className="leading-relaxed opacity-80" style={{ color: 'var(--ink)' }}>
-                  {category.whatToDo}
-                </p>
-              </div>
-
-              {/* Action CTAs */}
-              <div className="flex flex-wrap gap-2 pt-2">
-                <Link
-                  to={`/centers?category=${category.slug}`}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium border transition hover:scale-[1.02] active:scale-[0.98]"
-                  style={{
-                    borderColor: 'var(--signal)',
-                    color: 'var(--signal)',
-                    background: 'color-mix(in srgb, var(--signal) 10%, transparent)',
-                  }}
-                >
-                  <MapPin size={13} /> View Drop-off Points
-                </Link>
-                <Link
-                  to={`/pickup?category=${category.slug}`}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium transition hover:scale-[1.02] active:scale-[0.98]"
-                  style={{
-                    background: 'var(--copper)',
-                    color: 'var(--paper)',
-                  }}
-                >
-                  <Calendar size={13} /> Schedule Collection
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+          <MapPin size={13} />
+          <span>View Campus Drop-off Points</span>
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -592,108 +442,105 @@ export default function Guide() {
 
   return (
     <main className="min-h-screen pt-24 pb-20" style={{ background: 'var(--paper)' }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
 
-        {/* ── Section 1: Item Lookup ("Can I bin this?") ──────────────── */}
-        <section id="lookup">
-          <SectionHeading
-            eyebrow="Campus Disposal Guide"
-            title="Can I bin this? Instant verification lookup."
-            subtitle="Search across 36 common devices, cords, and accessories to verify recycling eligibility and hostel disposal protocols."
-          />
+        {/* ── 2-Column Desktop Grid: Left = Lookup Search, Right = Sticky Checklist ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          {/* Search + filter chips */}
-          <div className="mt-8 flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none"
-                style={{ color: 'var(--ink)' }}
-              />
-              <input
-                id="item-search"
-                type="text"
-                placeholder="Search device: phone, laptop charger, CFL bulb, power bank, vape..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border outline-none transition focus:ring-2 shadow-sm"
-                style={{
-                  background: 'var(--paper)',
-                  borderColor: 'var(--sand)',
-                  color: 'var(--ink)',
-                }}
-              />
+          {/* Left Column (col-span-12 lg:col-span-8): Can I bin this? Search & 3D Item Cards */}
+          <div className="lg:col-span-8 space-y-6">
+            <SectionHeading
+              eyebrow="Campus Disposal Guide"
+              title="Can I bin this? Instant verification lookup."
+              subtitle="Search across 36 common devices, cords, and accessories to verify recycling eligibility and hostel disposal protocols."
+            />
+
+            {/* Search + filter chips */}
+            <div className="flex flex-col gap-3">
+              <div className="relative">
+                <Search
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none"
+                  style={{ color: 'var(--ink)' }}
+                />
+                <input
+                  id="item-search"
+                  type="text"
+                  placeholder="Search device: phone, laptop charger, CFL bulb, power bank, vape..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border outline-none transition focus:ring-2 shadow-sm"
+                  style={{
+                    background: 'var(--paper)',
+                    borderColor: 'var(--sand)',
+                    color: 'var(--ink)',
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-2 flex-wrap items-center">
+                {VERDICT_FILTERS.map((f) => {
+                  const Icon = f.icon;
+                  const active = verdictFilter === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => setVerdictFilter(f.key)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-all ${
+                        active
+                          ? 'shadow-sm font-semibold'
+                          : 'hover:opacity-80'
+                      }`}
+                      style={{
+                        background: active ? 'var(--ink)' : 'color-mix(in srgb, var(--sand) 40%, var(--paper))',
+                        color: active ? 'var(--paper)' : 'var(--ink)',
+                        borderColor: active ? 'var(--ink)' : 'var(--sand)',
+                      }}
+                    >
+                      <Icon size={12} />
+                      <span>{f.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="flex gap-2 flex-wrap items-center">
-              {VERDICT_FILTERS.map((f) => {
-                const Icon = f.icon;
-                const active = verdictFilter === f.key;
-                return (
-                  <button
-                    key={f.key}
-                    onClick={() => setVerdictFilter(f.key)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border transition-all ${
-                      active
-                        ? 'shadow-sm font-semibold'
-                        : 'hover:opacity-80'
-                    }`}
-                    style={{
-                      background: active ? 'var(--ink)' : 'color-mix(in srgb, var(--sand) 40%, var(--paper))',
-                      color: active ? 'var(--paper)' : 'var(--ink)',
-                      borderColor: active ? 'var(--ink)' : 'var(--sand)',
-                    }}
-                  >
-                    <Icon size={12} />
-                    <span>{f.label}</span>
-                  </button>
-                );
-              })}
+            <p className="text-xs opacity-50" style={{ color: 'var(--ink)' }}>
+              Showing {filteredItems.length} of {GUIDE_ITEMS.length} verified campus items
+              {search && ` matching "${search}"`}
+            </p>
+
+            {/* 3D Item Cards Grid (2 cols on md) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <AnimatePresence>
+                {filteredItems.map((item) => (
+                  <ItemCard key={item.name} item={item} />
+                ))}
+              </AnimatePresence>
             </div>
+
+            {filteredItems.length === 0 && (
+              <div
+                className="py-16 text-center rounded-2xl border"
+                style={{ background: 'var(--paper)', borderColor: 'var(--sand)' }}
+              >
+                <Search size={32} className="mx-auto mb-3 opacity-30" style={{ color: 'var(--ink)' }} />
+                <p className="text-base font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
+                  No catalog matches for "{search}"
+                </p>
+                <p className="text-xs mt-1 opacity-60">
+                  Check our detailed category deep dives below, or consult campus environmental team.
+                </p>
+              </div>
+            )}
           </div>
 
-          <p className="mt-3 text-xs opacity-50" style={{ color: 'var(--ink)' }}>
-            Showing {filteredItems.length} of {GUIDE_ITEMS.length} verified campus items
-            {search && ` matching "${search}"`}
-          </p>
-
-          {/* 3D Item Cards Grid */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <AnimatePresence>
-              {filteredItems.map((item) => (
-                <ItemCard key={item.name} item={item} />
-              ))}
-            </AnimatePresence>
+          {/* Right Column (col-span-12 lg:col-span-4): Sticky 7 Critical Steps Floating Card */}
+          <div className="lg:col-span-4">
+            <StickyChecklistCard />
           </div>
 
-          {filteredItems.length === 0 && (
-            <div
-              className="py-16 text-center rounded-2xl border mt-6"
-              style={{ background: 'var(--paper)', borderColor: 'var(--sand)' }}
-            >
-              <Search size={32} className="mx-auto mb-3 opacity-30" style={{ color: 'var(--ink)' }} />
-              <p className="text-base font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
-                No catalog matches for "{search}"
-              </p>
-              <p className="text-xs mt-1 opacity-60">
-                Check our detailed category deep dives below, or consult campus environmental team.
-              </p>
-            </div>
-          )}
-        </section>
-
-        {/* ── Section 2: Universal 7-Step Checklist ────────────────────── */}
-        <section id="checklist">
-          <SectionHeading
-            eyebrow="Pre-Handover Protocol"
-            title="Before you hand anything in — 7 critical steps"
-            subtitle="Standard safety and privacy procedures before submitting equipment to campus drop-off points or hostel collectors."
-          />
-
-          <div className="mt-8">
-            <InteractiveChecklist />
-          </div>
-        </section>
+        </div>
 
         {/* ── Section 3: Battery Safety Callout (High visual fidelity) ──── */}
         <section id="battery-safety">
