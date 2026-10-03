@@ -169,49 +169,60 @@ export default function Nav() {
           </Link>
         </nav>
 
-        {/* Mobile toggle */}
+        {/* Mobile toggle — strictly hidden on desktop md:hidden */}
         <button
           onClick={() => setMobileOpen((prev) => !prev)}
+          className="flex md:hidden p-2 rounded-xl transition cursor-pointer hover:bg-black/5"
           style={{
-            display: 'flex',
-            padding: '0.5rem',
-            borderRadius: '0.5rem',
             color: isDark ? 'var(--paper)' : 'var(--ink)',
             background: 'transparent',
             border: 'none',
-            cursor: 'pointer',
           }}
-          className="md:hidden"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer with frosted glassmorphism */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{ background: 'var(--paper)', borderBottom: '1px solid var(--sand)', overflow: 'hidden' }}
-            className="md:hidden shadow-lg"
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            style={{
+              background: 'color-mix(in srgb, var(--paper) 92%, transparent)',
+              backdropFilter: 'blur(16px)',
+              borderBottom: '1px solid var(--sand)',
+              overflow: 'hidden',
+            }}
+            className="md:hidden shadow-xl"
           >
-            <div className="px-4 py-3 flex flex-col gap-1">
+            <div className="px-5 py-4 flex flex-col gap-1.5">
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--ink)] hover:bg-[var(--sand)] transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium transition hover:bg-black/5"
+                  style={{
+                    color: location.pathname === link.to ? 'var(--moss)' : 'var(--ink)',
+                    background: location.pathname === link.to ? 'color-mix(in srgb, var(--moss) 8%, transparent)' : 'transparent',
+                  }}
                 >
                   {link.label}
                 </Link>
               ))}
               <Link
                 to="/pickup"
-                className="mt-2 px-4 py-2.5 bg-[var(--copper)] text-[var(--paper)] text-sm font-medium rounded-lg text-center"
+                onClick={() => setMobileOpen(false)}
+                className="mt-2 px-4 py-2.5 text-sm font-medium rounded-xl text-center transition hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+                style={{
+                  background: 'var(--copper)',
+                  color: 'var(--paper)',
+                }}
               >
                 Request Collection
               </Link>
