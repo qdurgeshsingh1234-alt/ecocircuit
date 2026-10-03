@@ -6,8 +6,8 @@ import { Menu, X } from 'lucide-react';
 const navLinks = [
   { to: '/guide', label: 'Guide' },
   { to: '/centers', label: 'Find a Center' },
-  { to: '/pickup', label: 'Request Collection' },
-  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/dashboard', label: 'Impact Dashboard' },
+  { to: '/admin', label: 'Collector Portal' },
 ];
 
 function LogoMark({ size = 32 }: { size?: number }) {
