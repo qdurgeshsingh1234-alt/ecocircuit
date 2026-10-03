@@ -86,19 +86,21 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
   const d = payload[0];
   return (
     <div
-      className="rounded-xl border px-4 py-3 text-sm shadow-lg"
+      className="rounded-xl border px-4 py-3 text-sm shadow-xl backdrop-blur-md"
       style={{
-        background: 'var(--paper)',
+        background: 'color-mix(in srgb, var(--paper) 85%, transparent)',
         borderColor: 'var(--sand)',
         color: 'var(--ink)',
         fontFamily: 'var(--font-body)',
+        boxShadow: '0 8px 32px rgba(20, 23, 15, 0.12)',
       }}
     >
-      <p className="font-medium" style={{ color: 'var(--moss)' }}>
-        {d.value} kg diverted
-      </p>
-      <p className="mt-0.5 opacity-60">{formatChartDate(d.payload.createdAt)}</p>
-      <p className="mt-0.5 opacity-60 text-xs">{d.payload.trackingId}</p>
+      <div className="flex items-center gap-1.5 font-semibold" style={{ color: 'var(--moss)' }}>
+        <Leaf size={14} />
+        <span>{d.value} kg diverted</span>
+      </div>
+      <p className="mt-1 text-xs opacity-65 font-medium">{formatChartDate(d.payload.createdAt)}</p>
+      <p className="mt-0.5 text-[10px] tracking-wider uppercase opacity-45">{d.payload.trackingId}</p>
     </div>
   );
 }
@@ -344,25 +346,30 @@ function MetricCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="rounded-2xl border p-6"
+      className="relative overflow-hidden rounded-2xl border p-6 shadow-[0_0_40px_rgba(47,78,58,0.1)] transition-all hover:shadow-[0_0_45px_rgba(47,78,58,0.15)]"
       style={{ background: 'var(--paper)', borderColor: 'var(--sand)' }}
     >
-      <div className="flex items-start gap-3">
+      {/* Ambient background glow */}
+      <div
+        className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full blur-2xl opacity-15"
+        style={{ background: accent }}
+      />
+      <div className="relative z-10 flex items-start gap-4">
         <div
-          className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-          style={{ background: `color-mix(in srgb, ${accent} 12%, transparent)` }}
+          className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-xs"
+          style={{ background: `color-mix(in srgb, ${accent} 14%, transparent)` }}
         >
-          <Icon size={20} style={{ color: accent }} />
+          <Icon size={24} style={{ color: accent }} />
         </div>
         <div>
           <p
-            className="text-3xl font-semibold leading-none"
+            className="text-4xl font-bold leading-none tracking-tight"
             style={{ fontFamily: 'var(--font-heading)', color: 'var(--ink)' }}
           >
             {value}
-            <span className="ml-1 text-base font-normal opacity-60">{unit}</span>
+            <span className="ml-1.5 text-lg font-normal opacity-60">{unit}</span>
           </p>
-          <p className="mt-1 text-sm" style={{ color: 'var(--ink)', opacity: 0.55 }}>
+          <p className="mt-2 text-sm font-medium" style={{ color: 'var(--ink)', opacity: 0.65 }}>
             {label}
           </p>
         </div>
@@ -531,35 +538,55 @@ function DashboardView({ email, pickups, onLogout }: { email: string; pickups: P
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="mb-8 rounded-2xl border p-5"
+          className="mb-8 rounded-2xl border p-6 shadow-sm"
           style={{ background: 'var(--paper)', borderColor: 'var(--sand)' }}
         >
-          <p
-            className="mb-4 font-semibold"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--ink)', fontSize: '1rem' }}
-          >
-            Impact per request
-          </p>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p
+                className="font-semibold"
+                style={{ fontFamily: 'var(--font-heading)', color: 'var(--ink)', fontSize: '1.05rem' }}
+              >
+                Impact per request
+              </p>
+              <p className="text-xs" style={{ color: 'var(--ink)', opacity: 0.5 }}>
+                Kilograms of e-waste diverted across verified campus collections
+              </p>
+            </div>
+            <span
+              className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+              style={{
+                background: 'color-mix(in srgb, var(--moss) 12%, transparent)',
+                color: 'var(--moss)',
+              }}
+            >
+              Verified stats
+            </span>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid
-                strokeDasharray="3 3"
+                strokeDasharray="4 4"
                 stroke="var(--sand)"
+                strokeOpacity={0.7}
                 vertical={false}
               />
               <XAxis
                 dataKey="date"
-                tick={{ fill: 'var(--ink)', opacity: 0.45, fontSize: 11, fontFamily: 'var(--font-body)' }}
-                axisLine={false}
+                tick={{ fill: 'var(--ink)', opacity: 0.5, fontSize: 11, fontFamily: 'var(--font-body)' }}
+                axisLine={{ stroke: 'var(--sand)', strokeOpacity: 0.7 }}
                 tickLine={false}
               />
               <YAxis
                 unit=" kg"
-                tick={{ fill: 'var(--ink)', opacity: 0.45, fontSize: 11, fontFamily: 'var(--font-body)' }}
+                tick={{ fill: 'var(--ink)', opacity: 0.5, fontSize: 11, fontFamily: 'var(--font-body)' }}
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'color-mix(in srgb, var(--moss) 8%, transparent)' }} />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: 'color-mix(in srgb, var(--moss) 8%, transparent)', radius: 6 }}
+              />
               <Bar dataKey="kg" radius={[6, 6, 0, 0]}>
                 {chartData.map((_, i) => (
                   <Cell key={i} fill={barColors[i % barColors.length]} />
