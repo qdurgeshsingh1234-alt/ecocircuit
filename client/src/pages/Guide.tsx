@@ -8,7 +8,6 @@ import {
   MapPin,
   Calendar,
   ChevronDown,
-  Info,
   Battery,
   Wrench,
   XCircle,
@@ -18,14 +17,13 @@ import {
   Megaphone,
   Check,
   Sparkles,
-  ArrowRight,
   Monitor,
   Cpu,
   Lightbulb,
   Cable,
   Refrigerator,
 } from 'lucide-react';
-import { SectionHeading, Reveal } from '../components/ui';
+import { SectionHeading } from '../components/ui';
 import { CATEGORIES, type CategoryInfo } from '../data/categories';
 import { GUIDE_ITEMS, type GuideItem, type GuideVerdict } from '../data/guideItems';
 
