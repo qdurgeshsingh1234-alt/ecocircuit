@@ -1,10 +1,29 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, AlertTriangle, CheckCircle2, MapPin, Calendar,
-  ChevronDown, Info, Battery, Zap,
-  Monitor, Cpu, Lightbulb, Cable, Refrigerator,
+  Search,
+  AlertTriangle,
+  CheckCircle2,
+  MapPin,
+  Calendar,
+  ChevronDown,
+  Info,
+  Battery,
+  Wrench,
+  XCircle,
+  ShieldAlert,
+  Ban,
+  Flame,
+  Megaphone,
+  Check,
+  Sparkles,
+  ArrowRight,
+  Monitor,
+  Cpu,
+  Lightbulb,
+  Cable,
+  Refrigerator,
 } from 'lucide-react';
 import { SectionHeading, Reveal } from '../components/ui';
 import { CATEGORIES, type CategoryInfo } from '../data/categories';
@@ -12,110 +31,382 @@ import { GUIDE_ITEMS, type GuideItem, type GuideVerdict } from '../data/guideIte
 
 // ── Icon map for category accordions ────────────────────────────────────────
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
-  Monitor, Battery, Cpu, Lightbulb, Cable, Refrigerator,
+  Monitor,
+  Battery,
+  Cpu,
+  Lightbulb,
+  Cable,
+  Refrigerator,
 };
 
-// ── Verdict colour palette ────────────────────────────────────────────────────
-const VERDICT_STYLES: Record<GuideVerdict, { bg: string; border: string; text: string; dot: string }> = {
-  'E-waste':               { bg: 'var(--signal)',  border: 'rgba(107,143,113,0.3)',  text: '#fff', dot: 'var(--signal)' },
-  'Special handling':      { bg: 'var(--rust)',    border: 'rgba(155,74,62,0.3)',    text: '#fff', dot: 'var(--rust)' },
-  'Not e-waste':           { bg: '#6B7280',        border: 'rgba(107,114,128,0.3)',  text: '#fff', dot: '#6B7280' },
-  'Repair or reuse first': { bg: 'var(--copper)',  border: 'rgba(181,101,45,0.3)',  text: '#fff', dot: 'var(--copper)' },
+// ── Verdict styles ───────────────────────────────────────────────────────────
+const VERDICT_STYLES: Record<
+  GuideVerdict,
+  {
+    bg: string;
+    border: string;
+    badgeBg: string;
+    badgeText: string;
+    icon: typeof CheckCircle2;
+    label: string;
+  }
+> = {
+  'E-waste': {
+    bg: 'var(--signal)',
+    border: 'color-mix(in srgb, var(--signal) 30%, transparent)',
+    badgeBg: 'color-mix(in srgb, var(--signal) 12%, transparent)',
+    badgeText: 'var(--signal)',
+    icon: CheckCircle2,
+    label: 'Verified E-waste',
+  },
+  'Special handling': {
+    bg: 'var(--rust)',
+    border: 'color-mix(in srgb, var(--rust) 30%, transparent)',
+    badgeBg: 'color-mix(in srgb, var(--rust) 12%, transparent)',
+    badgeText: 'var(--rust)',
+    icon: AlertTriangle,
+    label: 'Special Hazardous Handling',
+  },
+  'Not e-waste': {
+    bg: 'var(--ink)',
+    border: 'color-mix(in srgb, var(--sand) 80%, transparent)',
+    badgeBg: 'color-mix(in srgb, var(--ink) 8%, transparent)',
+    badgeText: 'var(--ink)',
+    icon: XCircle,
+    label: 'Standard Refuse (Not E-waste)',
+  },
+  'Repair or reuse first': {
+    bg: 'var(--copper)',
+    border: 'color-mix(in srgb, var(--copper) 30%, transparent)',
+    badgeBg: 'color-mix(in srgb, var(--copper) 12%, transparent)',
+    badgeText: 'var(--copper)',
+    icon: Wrench,
+    label: 'Repair / Reuse Recommended',
+  },
 };
 
-// ── Item result card ─────────────────────────────────────────────────────────
+// ── 3D Interactive Tilting Card Component ─────────────────────────────────────
 function ItemCard({ item }: { item: GuideItem }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
   const style = VERDICT_STYLES[item.verdict];
+  const VerdictIcon = style.icon;
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rX = ((y - centerY) / centerY) * -6.5;
+    const rY = ((x - centerX) / centerX) * 6.5;
+
+    setRotateX(rX);
+    setRotateY(rY);
+    setGlare({
+      x: (x / rect.width) * 100,
+      y: (y / rect.height) * 100,
+      opacity: 0.18,
+    });
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+    setIsHovered(false);
+    setGlare((prev) => ({ ...prev, opacity: 0 }));
+  };
+
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.25 }}
-      className="rounded-xl border overflow-hidden bg-[var(--paper)]"
-      style={{ borderColor: style.border }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+      style={{ perspective: 1000 }}
+      className="h-full"
     >
-      {/* Verdict banner */}
       <div
-        className="flex items-center gap-2 px-4 py-2.5"
-        style={{ backgroundColor: style.bg }}
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${isHovered ? 12 : 0}px)`,
+          transition: isHovered
+            ? 'transform 0.08s ease-out, box-shadow 0.2s ease'
+            : 'transform 0.5s ease-out, box-shadow 0.3s ease',
+          transformStyle: 'preserve-3d',
+          boxShadow: isHovered
+            ? '0 20px 35px -10px rgba(20, 23, 15, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.6)'
+            : '0 4px 14px -3px rgba(20, 23, 15, 0.04)',
+          background: 'var(--paper)',
+          borderColor: style.border,
+        }}
+        className="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border transition-all"
       >
-        {item.verdict === 'E-waste' && <CheckCircle2 size={14} color="#fff" />}
-        {item.verdict === 'Special handling' && <AlertTriangle size={14} color="#fff" />}
-        {item.verdict === 'Not e-waste' && <Info size={14} color="#fff" />}
-        {item.verdict === 'Repair or reuse first' && <Zap size={14} color="#fff" />}
-        <span className="text-xs font-semibold tracking-wide" style={{ color: '#fff' }}>
-          {item.verdict}
-        </span>
-      </div>
+        {/* Dynamic Specular Glare overlay */}
+        <div
+          className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-300"
+          style={{
+            opacity: glare.opacity,
+            background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, 0.7) 0%, transparent 65%)`,
+          }}
+        />
 
-      <div className="p-4 space-y-3">
-        <h4 className="text-sm font-semibold text-[var(--ink)]">{item.name}</h4>
-        <p className="text-xs text-[var(--ink)]/65 leading-relaxed">{item.reason}</p>
-
-        {item.beforeYouHandIn.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-[var(--ink)]/50 uppercase tracking-wider mb-1.5">
-              Before you hand it in
-            </p>
-            <ul className="space-y-1">
-              {item.beforeYouHandIn.map((step) => (
-                <li key={step} className="flex items-start gap-2 text-xs text-[var(--ink)]/65">
-                  <span className="mt-1 w-1 h-1 rounded-full bg-[var(--signal)] shrink-0" />
-                  {step}
-                </li>
-              ))}
-            </ul>
+        {/* Card Content Top */}
+        <div>
+          {/* Header Verdict Ribbon */}
+          <div
+            className="flex items-center justify-between px-4 py-2.5 border-b"
+            style={{
+              background: `color-mix(in srgb, ${style.bg} 10%, var(--paper))`,
+              borderColor: style.border,
+            }}
+          >
+            <div className="flex items-center gap-1.5">
+              <VerdictIcon size={14} style={{ color: style.bg }} />
+              <span
+                className="text-xs font-semibold tracking-wide"
+                style={{ color: style.bg, fontFamily: 'var(--font-body)' }}
+              >
+                {style.label}
+              </span>
+            </div>
+            {item.categorySlug && (
+              <span className="text-[10px] uppercase tracking-wider opacity-50 font-medium">
+                {item.categorySlug}
+              </span>
+            )}
           </div>
-        )}
 
-        {item.disposalTip && (
-          <div className="p-3 rounded-lg bg-[var(--rust)]/8 border border-[var(--rust)]/20">
-            <p className="text-xs text-[var(--rust)] leading-relaxed">
-              <strong>⚠ </strong>{item.disposalTip}
-            </p>
-          </div>
-        )}
-
-        {/* Action buttons */}
-        {item.categorySlug ? (
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Link
-              to={`/centers?category=${item.categorySlug}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--signal)]/12 text-[var(--signal)] border border-[var(--signal)]/25 hover:bg-[var(--signal)]/20 transition-colors"
+          <div className="p-4 space-y-3">
+            <h4
+              className="text-base font-semibold tracking-tight text-[var(--ink)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
-              <MapPin size={12} /> Find a drop-off
-            </Link>
-            <Link
-              to={`/pickup?category=${item.categorySlug}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--copper)]/12 text-[var(--copper)] border border-[var(--copper)]/25 hover:bg-[var(--copper)]/20 transition-colors"
-            >
-              <Calendar size={12} /> Request collection
-            </Link>
+              {item.name}
+            </h4>
+            <p className="text-xs leading-relaxed opacity-70" style={{ color: 'var(--ink)' }}>
+              {item.reason}
+            </p>
+
+            {/* Checklist steps */}
+            {item.beforeYouHandIn.length > 0 && (
+              <div className="rounded-xl border p-3" style={{ borderColor: 'var(--sand)', background: 'color-mix(in srgb, var(--sand) 25%, var(--paper))' }}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider opacity-60 mb-2 flex items-center gap-1" style={{ color: 'var(--moss)' }}>
+                  <Sparkles size={11} /> Pre-Disposal Checklist
+                </p>
+                <ul className="space-y-1.5">
+                  {item.beforeYouHandIn.map((step) => (
+                    <li key={step} className="flex items-start gap-2 text-xs opacity-75">
+                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--signal)] shrink-0" />
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Disposal alert */}
+            {item.disposalTip && (
+              <div
+                className="flex items-start gap-2 rounded-xl border p-3 text-xs"
+                style={{
+                  background: 'color-mix(in srgb, var(--rust) 8%, var(--paper))',
+                  borderColor: 'color-mix(in srgb, var(--rust) 25%, transparent)',
+                  color: 'var(--rust)',
+                }}
+              >
+                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                <span className="leading-relaxed font-medium">{item.disposalTip}</span>
+              </div>
+            )}
           </div>
-        ) : (
-          <p className="text-xs text-[var(--ink)]/40 italic">Not accepted in e-waste bins — see disposal tip above.</p>
-        )}
+        </div>
+
+        {/* Action buttons footer */}
+        <div className="p-4 pt-1 border-t mt-auto" style={{ borderColor: 'var(--sand)' }}>
+          {item.categorySlug ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to={`/centers?category=${item.categorySlug}`}
+                className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  borderColor: 'var(--signal)',
+                  color: 'var(--signal)',
+                  background: 'color-mix(in srgb, var(--signal) 10%, transparent)',
+                }}
+              >
+                <MapPin size={12} /> Campus Points
+              </Link>
+              <Link
+                to={`/pickup?category=${item.categorySlug}`}
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  background: 'var(--copper)',
+                  color: 'var(--paper)',
+                }}
+              >
+                <Calendar size={12} /> Book Collection
+              </Link>
+            </div>
+          ) : (
+            <p className="text-xs italic opacity-50" style={{ color: 'var(--ink)' }}>
+              Standard campus dustbins or specialized vendor recovery.
+            </p>
+          )}
+        </div>
       </div>
     </motion.div>
   );
 }
 
-// ── "Before you hand anything in" checklist ──────────────────────────────────
-const CHECKLIST = [
-  { n: '01', title: 'Back up your data', detail: 'Photos, contacts, documents — copy to cloud or another device before resetting.' },
-  { n: '02', title: 'Sign out of accounts', detail: 'Google, Apple, Samsung, Microsoft — sign out so the next user or recycler cannot access them.' },
-  { n: '03', title: 'Factory reset', detail: 'A factory reset wipes personal data from the device. Do this for phones, tablets, laptops, smart TVs, and routers.' },
-  { n: '04', title: 'Remove SIM and SD cards', detail: 'These tiny cards hold a lot of personal data and are easy to miss.' },
-  { n: '05', title: 'Remove removable batteries', detail: 'If the battery is removable (AA, coin cell), take it out and add it to the battery collection separately.' },
-  { n: '06', title: 'Do not open or crush devices', detail: 'Opening a device voids its safe-handling properties. Crushed lithium batteries can ignite.' },
-  { n: '07', title: 'Tape loose battery terminals', detail: 'Loose batteries (AA, AAA, coin cells) can short-circuit in transit. Put a strip of electrical tape over the terminals.' },
+// ── Interactive Universal Checklist ───────────────────────────────────────────
+const CHECKLIST_ITEMS = [
+  { n: '01', title: 'Back up your data', detail: 'Photos, coursework, credentials — save to university OneDrive or cloud storage before wipe.' },
+  { n: '02', title: 'Sign out of all accounts', detail: 'Google, Apple ID, Microsoft 365, banking — unpair devices to disable activation lock.' },
+  { n: '03', title: 'Perform factory reset', detail: 'Encrypt and securely restore factory defaults on laptops, smartphones, tablets, and smart routers.' },
+  { n: '04', title: 'Eject SIM and microSD cards', detail: 'Check all trays and ports. Tiny memory cards carry personal files and are frequently forgotten.' },
+  { n: '05', title: 'Isolate removable batteries', detail: 'Extract AA, AAA, or coin batteries and store them safely in a separate dry paper pouch.' },
+  { n: '06', title: 'Do not crush or puncture casing', detail: 'Preserve physical casing integrity. Crushed lithium-ion cells can enter thermal runaway.' },
+  { n: '07', title: 'Insulate loose terminal leads', detail: 'Affix electrical tape over 9V, lithium cell, or battery pack contact points to prevent short circuits.' },
 ];
 
-// ── Category accordion ────────────────────────────────────────────────────────
+function InteractiveChecklist() {
+  const [checkedSteps, setCheckedSteps] = useState<Record<string, boolean>>({});
+
+  const toggleStep = (n: string) => {
+    setCheckedSteps((prev) => ({ ...prev, [n]: !prev[n] }));
+  };
+
+  const totalChecked = Object.values(checkedSteps).filter(Boolean).length;
+  const progressPercent = Math.round((totalChecked / CHECKLIST_ITEMS.length) * 100);
+
+  return (
+    <div className="space-y-6">
+      {/* Interactive Progress tracker banner */}
+      <div
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border p-5 backdrop-blur-md"
+        style={{
+          background: 'color-mix(in srgb, var(--sand) 40%, var(--paper))',
+          borderColor: 'var(--sand)',
+        }}
+      >
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--moss)]">
+            Pre-Collection Verification Tool
+          </span>
+          <h4
+            className="text-lg font-semibold tracking-tight text-[var(--ink)]"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Verify your gear before drop-off
+          </h4>
+          <p className="text-xs opacity-60">
+            Click each milestone as you prepare your electronics.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <span className="text-sm font-semibold" style={{ color: 'var(--moss)' }}>
+              {totalChecked} of {CHECKLIST_ITEMS.length} completed
+            </span>
+            <div className="w-36 h-2 rounded-full overflow-hidden bg-black/10 mt-1">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: 'var(--moss)' }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              />
+            </div>
+          </div>
+          {totalChecked === CHECKLIST_ITEMS.length && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--moss)] text-[var(--paper)] shadow-md"
+            >
+              <Check size={16} />
+            </motion.div>
+          )}
+        </div>
+      </div>
+
+      {/* Checklist grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {CHECKLIST_ITEMS.map((step) => {
+          const isDone = !!checkedSteps[step.n];
+          return (
+            <motion.div
+              key={step.n}
+              whileHover={{ y: -2 }}
+              onClick={() => toggleStep(step.n)}
+              className="cursor-pointer rounded-2xl border p-5 transition-all select-none relative overflow-hidden"
+              style={{
+                background: isDone
+                  ? 'color-mix(in srgb, var(--moss) 8%, var(--paper))'
+                  : 'var(--paper)',
+                borderColor: isDone ? 'var(--moss)' : 'var(--sand)',
+                boxShadow: isDone
+                  ? '0 8px 20px -8px rgba(47, 78, 58, 0.2)'
+                  : '0 2px 8px -2px rgba(20, 23, 15, 0.04)',
+              }}
+            >
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold transition-colors"
+                    style={{
+                      background: isDone ? 'var(--moss)' : 'var(--sand)',
+                      color: isDone ? 'var(--paper)' : 'var(--ink)',
+                    }}
+                  >
+                    {step.n}
+                  </span>
+                  <h4 className="text-sm font-semibold tracking-tight text-[var(--ink)]">
+                    {step.title}
+                  </h4>
+                </div>
+                <div
+                  className="flex h-5 w-5 items-center justify-center rounded-md border transition-colors shrink-0 mt-0.5"
+                  style={{
+                    borderColor: isDone ? 'var(--moss)' : 'var(--sand)',
+                    background: isDone ? 'var(--moss)' : 'transparent',
+                    color: '#fff',
+                  }}
+                >
+                  {isDone && <Check size={12} />}
+                </div>
+              </div>
+              <p className="text-xs opacity-65 leading-relaxed pl-9" style={{ color: 'var(--ink)' }}>
+                {step.detail}
+              </p>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Category Accordion Component ──────────────────────────────────────────────
 function CategoryAccordion({
-  category, isOpen, onToggle,
+  category,
+  isOpen,
+  onToggle,
 }: {
   category: CategoryInfo;
   isOpen: boolean;
@@ -125,20 +416,20 @@ function CategoryAccordion({
   return (
     <motion.div
       layout
-      className={`rounded-xl border overflow-hidden transition-shadow duration-200 ${
+      className={`rounded-2xl border overflow-hidden transition-all ${
         isOpen
-          ? 'border-[var(--signal)]/40 shadow-lg shadow-[var(--ink)]/5'
-          : 'border-[var(--sand)] hover:border-[var(--signal)]/30 hover:shadow-md'
+          ? 'border-[var(--signal)] shadow-lg shadow-[var(--ink)]/5'
+          : 'border-[var(--sand)] hover:border-[var(--signal)]/40 hover:shadow-sm'
       } bg-[var(--paper)]`}
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-4 p-5 text-left group"
+        className="w-full flex items-center gap-4 p-5 text-left group transition-colors"
       >
         <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-200"
+          className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105"
           style={{
-            backgroundColor: isOpen ? category.color + '25' : category.color + '12',
+            backgroundColor: isOpen ? `${category.color}25` : `${category.color}12`,
             color: category.color,
           }}
         >
@@ -146,26 +437,32 @@ function CategoryAccordion({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-[var(--ink)] text-base">{category.name}</h3>
+            <h3
+              className="text-base font-semibold text-[var(--ink)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              {category.name}
+            </h3>
             <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium border"
               style={{
-                backgroundColor: category.color + '12',
+                backgroundColor: `${category.color}12`,
                 color: category.color,
-                borderColor: category.color + '30',
+                borderColor: `${category.color}30`,
               }}
             >
-              <AlertTriangle size={9} />{category.riskLabel}
+              <AlertTriangle size={10} />
+              {category.riskLabel}
             </span>
           </div>
-          <p className="text-xs text-[var(--ink)]/45 mt-0.5">
-            {category.examples.slice(0, 4).join(', ')}…
+          <p className="text-xs opacity-50 mt-0.5 truncate" style={{ color: 'var(--ink)' }}>
+            {category.examples.slice(0, 5).join(', ')}…
           </p>
         </div>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.25 }}
-          className="shrink-0 text-[var(--ink)]/30"
+          className="shrink-0 text-[var(--ink)]/40"
         >
           <ChevronDown size={20} />
         </motion.div>
@@ -184,47 +481,80 @@ function CategoryAccordion({
             <div className="px-5 pb-6 space-y-4 border-t border-[var(--sand)] pt-4">
               {/* Examples */}
               <div>
-                <p className="text-xs font-medium text-[var(--ink)]/50 uppercase tracking-wider mb-2">
-                  What's in this category
+                <p className="text-[11px] font-semibold uppercase tracking-wider opacity-50 mb-2">
+                  Recognized Items In This Category
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {category.examples.map((ex) => (
-                    <span key={ex} className="px-2.5 py-1 text-xs bg-[var(--sand)] text-[var(--ink)]/70 rounded-md">
+                    <span
+                      key={ex}
+                      className="px-2.5 py-1 text-xs rounded-lg border font-medium"
+                      style={{
+                        background: 'color-mix(in srgb, var(--sand) 30%, var(--paper))',
+                        borderColor: 'var(--sand)',
+                        color: 'var(--ink)',
+                      }}
+                    >
                       {ex}
                     </span>
                   ))}
                 </div>
               </div>
 
-              {/* Why it matters */}
-              <div className="p-4 rounded-lg bg-[var(--rust)]/6 border border-[var(--rust)]/15">
-                <p className="text-xs font-medium text-[var(--rust)] mb-1.5 flex items-center gap-1.5">
-                  <AlertTriangle size={12} /> Why landfill disposal is harmful
+              {/* Hazard explanation */}
+              <div
+                className="p-4 rounded-xl border text-xs"
+                style={{
+                  background: 'color-mix(in srgb, var(--rust) 6%, var(--paper))',
+                  borderColor: 'color-mix(in srgb, var(--rust) 20%, transparent)',
+                }}
+              >
+                <p className="font-semibold text-[var(--rust)] mb-1 flex items-center gap-1.5">
+                  <ShieldAlert size={14} /> Environmental & Health Risk Profile
                 </p>
-                <p className="text-sm text-[var(--ink)]/65 leading-relaxed">{category.hazardDetails}</p>
+                <p className="leading-relaxed opacity-80" style={{ color: 'var(--ink)' }}>
+                  {category.hazardDetails}
+                </p>
               </div>
 
-              {/* What to do */}
-              <div className="p-4 rounded-lg bg-[var(--signal)]/8 border border-[var(--signal)]/20">
-                <p className="text-xs font-medium text-[var(--signal)] mb-1.5 flex items-center gap-1.5">
-                  <CheckCircle2 size={12} /> What to do before handing in
+              {/* Hand-in actions */}
+              <div
+                className="p-4 rounded-xl border text-xs"
+                style={{
+                  background: 'color-mix(in srgb, var(--moss) 6%, var(--paper))',
+                  borderColor: 'color-mix(in srgb, var(--moss) 20%, transparent)',
+                }}
+              >
+                <p className="font-semibold text-[var(--moss)] mb-1 flex items-center gap-1.5">
+                  <CheckCircle2 size={14} /> Safe Preparation Protocol
                 </p>
-                <p className="text-sm text-[var(--ink)]/65 leading-relaxed">{category.whatToDo}</p>
+                <p className="leading-relaxed opacity-80" style={{ color: 'var(--ink)' }}>
+                  {category.whatToDo}
+                </p>
               </div>
 
-              {/* Links */}
-              <div className="flex flex-wrap gap-2">
+              {/* Action CTAs */}
+              <div className="flex flex-wrap gap-2 pt-2">
                 <Link
                   to={`/centers?category=${category.slug}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-[var(--signal)]/12 text-[var(--signal)] border border-[var(--signal)]/25 hover:bg-[var(--signal)]/20 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium border transition hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    borderColor: 'var(--signal)',
+                    color: 'var(--signal)',
+                    background: 'color-mix(in srgb, var(--signal) 10%, transparent)',
+                  }}
                 >
-                  <MapPin size={13} /> Find drop-off points for {category.shortName}
+                  <MapPin size={13} /> View Drop-off Points
                 </Link>
                 <Link
                   to={`/pickup?category=${category.slug}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-[var(--copper)]/12 text-[var(--copper)] border border-[var(--copper)]/25 hover:bg-[var(--copper)]/20 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium transition hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: 'var(--copper)',
+                    color: 'var(--paper)',
+                  }}
                 >
-                  <Calendar size={13} /> Request collection
+                  <Calendar size={13} /> Schedule Collection
                 </Link>
               </div>
             </div>
@@ -235,15 +565,16 @@ function CategoryAccordion({
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
-const VERDICT_FILTERS: { key: GuideVerdict | 'all'; label: string }[] = [
-  { key: 'all', label: 'All items' },
-  { key: 'E-waste', label: 'E-waste ✓' },
-  { key: 'Special handling', label: 'Special handling ⚠' },
-  { key: 'Not e-waste', label: 'Not e-waste ✗' },
-  { key: 'Repair or reuse first', label: 'Repair first 🔧' },
+// ── Verdict Filter Chips ──────────────────────────────────────────────────────
+const VERDICT_FILTERS: { key: GuideVerdict | 'all'; label: string; icon: typeof CheckCircle2 }[] = [
+  { key: 'all', label: 'All 36 Items', icon: Sparkles },
+  { key: 'E-waste', label: 'E-waste', icon: CheckCircle2 },
+  { key: 'Special handling', label: 'Hazardous / Special', icon: AlertTriangle },
+  { key: 'Not e-waste', label: 'Non-electronic', icon: XCircle },
+  { key: 'Repair or reuse first', label: 'Repair First', icon: Wrench },
 ];
 
+// ── Guide Page Root ───────────────────────────────────────────────────────────
 export default function Guide() {
   const [search, setSearch] = useState('');
   const [verdictFilter, setVerdictFilter] = useState<GuideVerdict | 'all'>('all');
@@ -262,145 +593,209 @@ export default function Guide() {
   }, [search, verdictFilter]);
 
   return (
-    <main className="pt-24 section-pad bg-[var(--paper)]">
-      <div className="max-w-content mx-auto px-4 md:px-6 space-y-16">
+    <main className="min-h-screen pt-24 pb-20" style={{ background: 'var(--paper)' }}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
 
-        {/* ── Section 1: Can I bin this? ────────────────────────────────── */}
-        <section>
+        {/* ── Section 1: Item Lookup ("Can I bin this?") ──────────────── */}
+        <section id="lookup">
           <SectionHeading
-            eyebrow="Quick check"
-            title="Can I bin this? Check before you dispose."
-            subtitle="Search any device or item to see whether it's e-waste, needs special handling, or is fine for the regular bin."
+            eyebrow="Campus Disposal Guide"
+            title="Can I bin this? Instant verification lookup."
+            subtitle="Search across 36 common devices, cords, and accessories to verify recycling eligibility and hostel disposal protocols."
           />
 
-          {/* Search + verdict filter */}
-          <Reveal delay={0.1}>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ink)]/35" />
-                <input
-                  id="item-search"
-                  type="text"
-                  placeholder="Search: phone, charger, CFL, power bank, extension cord…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 text-sm bg-[var(--sand)] border border-[var(--sand)] rounded-lg text-[var(--ink)] placeholder:text-[var(--ink)]/35 focus:outline-none focus:border-[var(--signal)] focus:ring-2 focus:ring-[var(--signal)]/20 transition-all"
-                />
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {VERDICT_FILTERS.map((f) => (
+          {/* Search + filter chips */}
+          <div className="mt-8 flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none"
+                style={{ color: 'var(--ink)' }}
+              />
+              <input
+                id="item-search"
+                type="text"
+                placeholder="Search device: phone, laptop charger, CFL bulb, power bank, vape..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border outline-none transition focus:ring-2 shadow-sm"
+                style={{
+                  background: 'var(--paper)',
+                  borderColor: 'var(--sand)',
+                  color: 'var(--ink)',
+                }}
+              />
+            </div>
+
+            <div className="flex gap-2 flex-wrap items-center">
+              {VERDICT_FILTERS.map((f) => {
+                const Icon = f.icon;
+                const active = verdictFilter === f.key;
+                return (
                   <button
                     key={f.key}
                     onClick={() => setVerdictFilter(f.key)}
-                    className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all duration-150 ${
-                      verdictFilter === f.key
-                        ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                        : 'bg-transparent text-[var(--ink)]/60 border-[var(--sand)] hover:bg-[var(--sand)]'
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border transition-all ${
+                      active
+                        ? 'shadow-sm font-semibold'
+                        : 'hover:opacity-80'
                     }`}
+                    style={{
+                      background: active ? 'var(--ink)' : 'color-mix(in srgb, var(--sand) 40%, var(--paper))',
+                      color: active ? 'var(--paper)' : 'var(--ink)',
+                      borderColor: active ? 'var(--ink)' : 'var(--sand)',
+                    }}
                   >
-                    {f.label}
+                    <Icon size={12} />
+                    <span>{f.label}</span>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          </Reveal>
+          </div>
 
-          <Reveal delay={0.15}>
-            <p className="mt-3 text-xs text-[var(--ink)]/40">
-              Showing {filteredItems.length} of {GUIDE_ITEMS.length} items
-              {search && ` matching "${search}"`}
-            </p>
-          </Reveal>
+          <p className="mt-3 text-xs opacity-50" style={{ color: 'var(--ink)' }}>
+            Showing {filteredItems.length} of {GUIDE_ITEMS.length} verified campus items
+            {search && ` matching "${search}"`}
+          </p>
 
-          {/* Results grid */}
-          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 3D Item Cards Grid */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <AnimatePresence>
               {filteredItems.map((item) => (
                 <ItemCard key={item.name} item={item} />
               ))}
             </AnimatePresence>
-            {filteredItems.length === 0 && (
-              <div className="col-span-2 py-16 text-center text-[var(--ink)]/40">
-                <Search size={32} className="mx-auto mb-3 opacity-40" />
-                <p className="text-sm">No items found for "{search}"</p>
-                <p className="text-xs mt-1">Try a different name, or browse the categories below.</p>
-              </div>
-            )}
           </div>
-        </section>
 
-        {/* ── Section 2: Before you hand anything in ───────────────────── */}
-        <section>
-          <Reveal>
-            <SectionHeading
-              eyebrow="Universal checklist"
-              title="Before you hand anything in — 7 critical steps"
-              subtitle="These steps apply to every electronic item you hand to a collector or drop at a center."
-            />
-          </Reveal>
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {CHECKLIST.map((step, i) => (
-              <Reveal key={step.n} delay={i * 0.06}>
-                <div className="h-full p-5 rounded-xl border border-[var(--sand)] bg-[var(--sand)] space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0"
-                      style={{ backgroundColor: 'var(--signal)', color: '#fff' }}
-                    >
-                      {step.n}
-                    </span>
-                    <h4 className="text-sm font-semibold text-[var(--ink)]">{step.title}</h4>
-                  </div>
-                  <p className="text-xs text-[var(--ink)]/60 leading-relaxed pl-11">{step.detail}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Section 3: Battery safety callout ────────────────────────── */}
-        <section>
-          <Reveal>
-            <div className="p-6 rounded-2xl border-2 border-[var(--rust)]/40 bg-[var(--rust)]/5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-[var(--rust)]/15">
-                  <Battery size={20} style={{ color: 'var(--rust)' }} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium tracking-widest uppercase text-[var(--rust)]">Battery safety</p>
-                  <h3 className="text-[var(--ink)] mt-0.5">Swollen or damaged lithium batteries</h3>
-                </div>
-              </div>
-              <p className="text-sm text-[var(--ink)]/70 leading-relaxed">
-                Lithium batteries swell when the cells degrade internally, releasing flammable gas. A swollen battery can ignite or explode if punctured, crushed, or exposed to heat.
+          {filteredItems.length === 0 && (
+            <div
+              className="py-16 text-center rounded-2xl border mt-6"
+              style={{ background: 'var(--paper)', borderColor: 'var(--sand)' }}
+            >
+              <Search size={32} className="mx-auto mb-3 opacity-30" style={{ color: 'var(--ink)' }} />
+              <p className="text-base font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
+                No catalog matches for "{search}"
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { icon: '⛔', rule: 'Stop using it immediately. Do not charge a swollen battery.' },
-                  { icon: '🚫', rule: 'Do not puncture, bend, or compress the battery in any way.' },
-                  { icon: '🏜️', rule: 'Store it in a cool, dry place — away from paper, fabric, and anything flammable.' },
-                  { icon: '📢', rule: 'Tell the collector it is a damaged or swollen battery before handing it over.' },
-                ].map(({ icon, rule }) => (
-                  <div key={rule} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--paper)] border border-[var(--rust)]/20">
-                    <span className="text-lg shrink-0 mt-0.5">{icon}</span>
-                    <p className="text-xs text-[var(--ink)]/70 leading-relaxed">{rule}</p>
-                  </div>
-                ))}
+              <p className="text-xs mt-1 opacity-60">
+                Check our detailed category deep dives below, or consult campus environmental team.
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* ── Section 2: Universal 7-Step Checklist ────────────────────── */}
+        <section id="checklist">
+          <SectionHeading
+            eyebrow="Pre-Handover Protocol"
+            title="Before you hand anything in — 7 critical steps"
+            subtitle="Standard safety and privacy procedures before submitting equipment to campus drop-off points or hostel collectors."
+          />
+
+          <div className="mt-8">
+            <InteractiveChecklist />
+          </div>
+        </section>
+
+        {/* ── Section 3: Battery Safety Callout (High visual fidelity) ──── */}
+        <section id="battery-safety">
+          <div
+            className="p-6 sm:p-8 rounded-3xl border-2 space-y-5 shadow-sm relative overflow-hidden"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--rust) 40%, transparent)',
+              background: 'color-mix(in srgb, var(--rust) 6%, var(--paper))',
+            }}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border"
+                style={{
+                  background: 'color-mix(in srgb, var(--rust) 15%, transparent)',
+                  borderColor: 'color-mix(in srgb, var(--rust) 35%, transparent)',
+                  color: 'var(--rust)',
+                }}
+              >
+                <Battery size={24} />
+              </div>
+              <div>
+                <span className="text-xs font-semibold tracking-widest uppercase text-[var(--rust)]">
+                  Critical Campus Safety Warning
+                </span>
+                <h3
+                  className="text-2xl font-semibold tracking-tight text-[var(--ink)] mt-0.5"
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  Swollen or damaged lithium battery protocol
+                </h3>
+                <p className="text-xs sm:text-sm opacity-75 mt-1 leading-relaxed" style={{ color: 'var(--ink)' }}>
+                  Degraded lithium-ion cells generate flammable organic gases internally. Punctured or compressed cells can experience runaway ignition inside hostel storage or disposal bins.
+                </p>
               </div>
             </div>
-          </Reveal>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+              {[
+                {
+                  icon: Ban,
+                  title: 'Cease charging immediately',
+                  text: 'Disconnect chargers and power bricks at once. Do not attempt recharging a bloated cell.',
+                },
+                {
+                  icon: ShieldAlert,
+                  title: 'Zero compression',
+                  text: 'Never puncture, compress, bend, or force a swollen battery into a tight bag or drawer.',
+                },
+                {
+                  icon: Flame,
+                  title: 'Isolate in cool perimeter',
+                  text: 'Keep in a ceramic dish, metallic tin, or concrete floor away from bedding, paper, and fabrics.',
+                },
+                {
+                  icon: Megaphone,
+                  title: 'Explicitly flag to collectors',
+                  text: 'Inform the campus collection crew upfront that the parcel contains a damaged cell for fire-safe handling.',
+                },
+              ].map(({ icon: Icon, title, text }) => (
+                <div
+                  key={title}
+                  className="flex items-start gap-3 p-4 rounded-2xl border"
+                  style={{
+                    background: 'var(--paper)',
+                    borderColor: 'color-mix(in srgb, var(--rust) 20%, transparent)',
+                  }}
+                >
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-xl shrink-0 mt-0.5"
+                    style={{
+                      background: 'color-mix(in srgb, var(--rust) 12%, transparent)',
+                      color: 'var(--rust)',
+                    }}
+                  >
+                    <Icon size={16} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>
+                      {title}
+                    </h5>
+                    <p className="text-xs opacity-65 leading-relaxed mt-0.5" style={{ color: 'var(--ink)' }}>
+                      {text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
-        {/* ── Section 4: Learn by category ─────────────────────────────── */}
-        <section>
-          <Reveal>
-            <SectionHeading
-              eyebrow="Deep dive"
-              title="Learn by category"
-              subtitle="Expand any category to see what goes in, why it's hazardous, what to do before handing it in, and where to take it."
-            />
-          </Reveal>
-          <motion.div layout className="mt-6 space-y-3">
+        {/* ── Section 4: Deep Dive Categories ──────────────────────────── */}
+        <section id="categories">
+          <SectionHeading
+            eyebrow="Category Directory"
+            title="Learn by category"
+            subtitle="Explore regulatory classifications, hazardous constituent metals, and recovery guidelines under CPCB E-Waste Rules."
+          />
+
+          <motion.div layout className="mt-8 space-y-3">
             {CATEGORIES.map((cat) => (
               <CategoryAccordion
                 key={cat.id}
@@ -412,18 +807,15 @@ export default function Guide() {
           </motion.div>
         </section>
 
-        {/* ── Sources footnote ──────────────────────────────────────────── */}
-        <Reveal>
-          <div className="p-5 bg-[var(--sand)] rounded-xl border border-[var(--sand)]">
-            <p className="text-xs text-[var(--ink)]/50 leading-relaxed">
-              <strong className="text-[var(--ink)]/70">Sources:</strong>{' '}
-              Global E-waste Monitor 2024 (UNU/UNITAR/ITU) · WHO Environmental Health Guidelines 2023 · Basel Action Network · CPCB India — E-waste Management Rules 2022 · UNITAR, 2024.{' '}
-              <span className="text-[var(--copper)]">
-                Collection center data, impact numbers, and collection schedules shown on this site are sample data for demonstration purposes.
-              </span>
-            </p>
-          </div>
-        </Reveal>
+        {/* ── Citation footnote ────────────────────────────────────────── */}
+        <div
+          className="rounded-2xl border p-5 text-xs opacity-75"
+          style={{ background: 'color-mix(in srgb, var(--sand) 30%, var(--paper))', borderColor: 'var(--sand)' }}
+        >
+          <p className="leading-relaxed" style={{ color: 'var(--ink)' }}>
+            <strong>Regulatory Sources:</strong> Central Pollution Control Board (CPCB) India — E-Waste Management Rules 2022 · United Nations Global E-waste Monitor (GEM 2024) · WHO Chemical Safety Guidelines 2023. Campus points and collection estimates represent demonstration prototype data for Lovely Professional University.
+          </p>
+        </div>
 
       </div>
     </main>
