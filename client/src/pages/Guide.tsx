@@ -271,6 +271,165 @@ function ItemCard({ item }: { item: GuideItem }) {
   );
 }
 
+// ── Category Accordion Component ──────────────────────────────────────────────
+function CategoryAccordion({
+  category,
+  isOpen,
+  onToggle,
+}: {
+  category: CategoryInfo;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const Icon = ICON_MAP[category.icon] ?? Cpu;
+  return (
+    <motion.div
+      layout
+      className={`rounded-2xl border overflow-hidden transition-all ${
+        isOpen
+          ? 'border-[var(--signal)] shadow-lg shadow-[var(--ink)]/5'
+          : 'border-[var(--sand)] hover:border-[var(--signal)]/40 hover:shadow-sm'
+      } bg-[var(--paper)]`}
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-4 p-5 text-left group transition-colors"
+      >
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105"
+          style={{
+            backgroundColor: isOpen ? `${category.color}25` : `${category.color}12`,
+            color: category.color,
+          }}
+        >
+          <Icon size={22} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3
+              className="text-base font-semibold text-[var(--ink)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              {category.name}
+            </h3>
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium border"
+              style={{
+                backgroundColor: `${category.color}12`,
+                color: category.color,
+                borderColor: `${category.color}30`,
+              }}
+            >
+              <AlertTriangle size={10} />
+              {category.riskLabel}
+            </span>
+          </div>
+          <p className="text-xs opacity-50 mt-0.5 truncate" style={{ color: 'var(--ink)' }}>
+            {category.examples.slice(0, 5).join(', ')}…
+          </p>
+        </div>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.25 }}
+          className="shrink-0 text-[var(--ink)]/40"
+        >
+          <ChevronDown size={20} />
+        </motion.div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-6 space-y-4 border-t border-[var(--sand)] pt-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider opacity-50 mb-2">
+                  Recognized Items In This Category
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {category.examples.map((ex) => (
+                    <span
+                      key={ex}
+                      className="px-2.5 py-1 text-xs rounded-lg border font-medium"
+                      style={{
+                        background: 'color-mix(in srgb, var(--sand) 30%, var(--paper))',
+                        borderColor: 'var(--sand)',
+                        color: 'var(--ink)',
+                      }}
+                    >
+                      {ex}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                className="p-4 rounded-xl border text-xs"
+                style={{
+                  background: 'color-mix(in srgb, var(--rust) 6%, var(--paper))',
+                  borderColor: 'color-mix(in srgb, var(--rust) 20%, transparent)',
+                }}
+              >
+                <p className="font-semibold text-[var(--rust)] mb-1 flex items-center gap-1.5">
+                  <ShieldAlert size={14} /> Environmental & Health Risk Profile
+                </p>
+                <p className="leading-relaxed opacity-80" style={{ color: 'var(--ink)' }}>
+                  {category.hazardDetails}
+                </p>
+              </div>
+
+              <div
+                className="p-4 rounded-xl border text-xs"
+                style={{
+                  background: 'color-mix(in srgb, var(--moss) 6%, var(--paper))',
+                  borderColor: 'color-mix(in srgb, var(--moss) 20%, transparent)',
+                }}
+              >
+                <p className="font-semibold text-[var(--moss)] mb-1 flex items-center gap-1.5">
+                  <CheckCircle2 size={14} /> Safe Preparation Protocol
+                </p>
+                <p className="leading-relaxed opacity-80" style={{ color: 'var(--ink)' }}>
+                  {category.whatToDo}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Link
+                  to={`/centers?category=${category.slug}`}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium border transition hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    borderColor: 'var(--signal)',
+                    color: 'var(--signal)',
+                    background: 'color-mix(in srgb, var(--signal) 10%, transparent)',
+                  }}
+                >
+                  <MapPin size={13} /> View Drop-off Points
+                </Link>
+                <Link
+                  to={`/pickup?category=${category.slug}`}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium transition hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: 'var(--copper)',
+                    color: 'var(--paper)',
+                  }}
+                >
+                  <Calendar size={13} /> Schedule Collection
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 // ── Interactive Universal Checklist ───────────────────────────────────────────
 const CHECKLIST_ITEMS = [
   { n: '01', title: 'Back up your data', detail: 'Photos, coursework, credentials — save to university OneDrive or cloud storage before wipe.' },
