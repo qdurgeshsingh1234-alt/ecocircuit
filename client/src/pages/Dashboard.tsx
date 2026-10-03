@@ -347,10 +347,6 @@ function MetricCard({
       className="rounded-2xl border p-6"
       style={{ background: 'var(--paper)', borderColor: 'var(--sand)' }}
     >
-      <div
-        className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl"
-        style={{ background: accent, opacity: 0.12 }}
-      />
       <div className="flex items-start gap-3">
         <div
           className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
@@ -530,7 +526,7 @@ function DashboardView({ email, pickups, onLogout }: { email: string; pickups: P
       </div>
 
       {/* Chart */}
-      {pickups.length > 1 && (
+      {pickups.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
