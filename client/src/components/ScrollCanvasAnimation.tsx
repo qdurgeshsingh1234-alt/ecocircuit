@@ -8,7 +8,7 @@ interface ScrollCanvasAnimationProps {
 }
 
 // Story beats: each fires at a % of total animation progress
-// and shows a label + headline + sub
+// and shows a label + headline + sub using strictly brand tokens
 const STORY_BEATS = [
   {
     id: 'assembled',
@@ -35,7 +35,7 @@ const STORY_BEATS = [
     tag: 'Recoverable Components',
     headline: 'Gold, copper & rare earths — all recoverable.',
     sub: '10 old phones hold ~34g of gold. One laptop contains ~0.6kg of copper.',
-    accent: '#B8A36A',
+    accent: 'var(--copper)',
   },
   {
     id: 'recycle',
@@ -60,7 +60,7 @@ const STORY_BEATS = [
 export default function ScrollCanvasAnimation({
   sectionRef,
   totalFrames = 198,
-  framePathPrefix = '/scroll_animation/ezgif-frame-',
+  framePathPrefix = '/frames/ezgif-frame-',
 }: ScrollCanvasAnimationProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
@@ -69,6 +69,27 @@ export default function ScrollCanvasAnimation({
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [activeStory, setActiveStory] = useState<string | null>('assembled');
   const [progress, setProgress] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(0);
+  const [isReady, setIsReady] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -93,7 +114,7 @@ export default function ScrollCanvasAnimation({
       drawFrame(currentFrameRef.current);
     };
 
-    // ── Draw frame with object-fit:cover ───────────────────────────
+    // ── Draw frame with object-fit:contain (95% viewport coverage) ────
     const drawFrame = (index: number) => {
       const ctx = ctxRef.current;
       if (!ctx || !canvas) return;
@@ -106,7 +127,6 @@ export default function ScrollCanvasAnimation({
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
 
-      // Object-fit: contain with slight zoom (95% of viewport coverage)
       const scale = Math.min(cssW / iw, cssH / ih) * 1.05;
       const drawW = iw * scale;
       const drawH = ih * scale;
@@ -132,6 +152,8 @@ export default function ScrollCanvasAnimation({
       const beat = STORY_BEATS.find((b) => p >= b.from && p <= b.to);
       setActiveStory(beat ? beat.id : null);
 
+      if (prefersReducedMotion) return; // Static frame if user prefers reduced motion
+
       const frameIndex = Math.min(Math.floor(p * (totalFrames - 1)), totalFrames - 1);
       if (frameIndex !== currentFrameRef.current) {
         currentFrameRef.current = frameIndex;
@@ -140,7 +162,7 @@ export default function ScrollCanvasAnimation({
       }
     };
 
-    // ── Preload all frames ───────────────────────────────────────────
+    // ── Preload frames ───────────────────────────────────────────
     const images: HTMLImageElement[] = new Array(totalFrames);
     let loaded = 0;
 
@@ -149,11 +171,25 @@ export default function ScrollCanvasAnimation({
       img.decoding = 'async';
       const idx = i;
       const padded = String(i + 1).padStart(3, '0');
-      img.src = `${framePathPrefix}${padded}.png`;
+      img.src = `${framePathPrefix}${padded}.jpg`;
       img.onload = () => {
         loaded++;
-        if (idx === 0) { resizeCanvas(); drawFrame(0); }
-        if (loaded === totalFrames) drawFrame(currentFrameRef.current);
+        setLoadedCount(loaded);
+        if (idx === 0) {
+          resizeCanvas();
+          drawFrame(0);
+        }
+        if (loaded >= Math.min(15, totalFrames)) {
+          setIsReady(true);
+        }
+        if (loaded === totalFrames) {
+          setIsReady(true);
+          drawFrame(currentFrameRef.current);
+        }
+      };
+      img.onerror = () => {
+        loaded++;
+        setLoadedCount(loaded);
       };
       images[i] = img;
     }
@@ -170,12 +206,32 @@ export default function ScrollCanvasAnimation({
       window.removeEventListener('scroll', onScroll);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
-  }, [sectionRef, totalFrames, framePathPrefix]);
+  }, [sectionRef, totalFrames, framePathPrefix, prefersReducedMotion]);
 
   const beat = STORY_BEATS.find((b) => b.id === activeStory);
+  // On mobile (<768px), suppress story overlay when at top of page (progress < 0.08)
+  // so the hero headline, description, and primary CTA buttons have zero obstruction
+  const showStoryOverlay = beat && (!isMobile || progress >= 0.08);
 
   return (
     <>
+      {/* Loading progress indicator */}
+      {!isReady && loadedCount < totalFrames && (
+        <div
+          className="absolute top-20 right-4 md:right-8 z-30 flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--sand)]/20 bg-[var(--ink)]/90 text-xs font-mono text-[var(--paper)]/80 pointer-events-none shadow"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--copper)] animate-ping" />
+          <span>Loading visual frames {Math.round((loadedCount / totalFrames) * 100)}%</span>
+        </div>
+      )}
+
+      {/* Reduced motion notice if active */}
+      {prefersReducedMotion && (
+        <div className="absolute top-20 left-4 md:left-8 z-30 px-3 py-1.5 rounded-full border border-[var(--sand)]/20 bg-[var(--ink)]/90 text-xs text-[var(--paper)]/80 pointer-events-none">
+          Static view (reduced motion active)
+        </div>
+      )}
+
       {/* Hi-DPI canvas — covers full sticky viewport */}
       <canvas
         ref={canvasRef}
@@ -191,82 +247,96 @@ export default function ScrollCanvasAnimation({
         }}
       />
 
-      {/* ── Story overlay ── rendered on the RIGHT half, lower ── */}
+      {/* ── Story overlay ── */}
       <AnimatePresence mode="wait">
-        {beat && (
+        {showStoryOverlay && (
           <motion.div
             key={beat.id}
-            initial={{ opacity: 0, y: 18, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            style={{
-              position: 'absolute',
-              right: '3rem',
-              bottom: '5rem',
-              maxWidth: '22rem',
-              zIndex: 20,
-              pointerEvents: 'none',
-            }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute z-20 pointer-events-none left-4 right-4 bottom-6 md:left-auto md:right-12 md:bottom-20 md:max-w-xs rounded-xl p-4 md:p-5 border border-[var(--sand)]/20 bg-[var(--ink)]/92 shadow-2xl"
           >
             {/* Tag pill */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.3rem 0.75rem',
-              borderRadius: '9999px',
-              border: `1px solid ${beat.accent}55`,
-              background: `${beat.accent}18`,
-              marginBottom: '0.75rem',
-            }}>
-              <span style={{
-                width: 5, height: 5, borderRadius: '50%',
-                backgroundColor: beat.accent,
-                boxShadow: `0 0 6px ${beat.accent}`,
-              }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: beat.accent, fontFamily: 'var(--font-body)' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.25rem 0.65rem',
+                borderRadius: '9999px',
+                border: `1px solid ${beat.accent}`,
+                background: 'rgba(20, 23, 15, 0.6)',
+                marginBottom: '0.5rem',
+              }}
+            >
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  backgroundColor: beat.accent,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: beat.accent,
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
                 {beat.tag}
               </span>
             </div>
 
             {/* Headline */}
-            <h3 style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
-              fontWeight: 500,
-              lineHeight: 1.25,
-              color: 'var(--paper)',
-              marginBottom: '0.6rem',
-              textShadow: '0 2px 16px rgba(0,0,0,0.5)',
-            }}>
+            <h3
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+                fontWeight: 500,
+                lineHeight: 1.25,
+                color: 'var(--paper)',
+                marginBottom: '0.4rem',
+              }}
+            >
               {beat.headline}
             </h3>
 
             {/* Sub */}
-            <p style={{
-              fontSize: '0.8rem',
-              lineHeight: 1.65,
-              color: 'rgba(244,241,233,0.65)',
-              textShadow: '0 1px 8px rgba(0,0,0,0.5)',
-            }}>
+            <p
+              style={{
+                fontSize: '0.75rem',
+                lineHeight: 1.6,
+                color: 'rgba(244, 241, 233, 0.75)',
+              }}
+            >
               {beat.sub}
             </p>
 
             {/* Progress bar for this beat */}
-            <div style={{
-              marginTop: '1rem',
-              height: 2,
-              borderRadius: 2,
-              background: 'rgba(244,241,233,0.12)',
-              overflow: 'hidden',
-            }}>
+            <div
+              style={{
+                marginTop: '0.75rem',
+                height: 2,
+                borderRadius: 2,
+                background: 'rgba(244, 241, 233, 0.15)',
+                overflow: 'hidden',
+              }}
+            >
               <motion.div
                 style={{
                   height: '100%',
                   backgroundColor: beat.accent,
                   borderRadius: 2,
-                  width: `${Math.min(100, Math.max(0, ((progress - beat.from) / (beat.to - beat.from)) * 100))}%`,
+                  width: `${Math.min(
+                    100,
+                    Math.max(0, ((progress - beat.from) / (beat.to - beat.from)) * 100)
+                  )}%`,
                 }}
                 transition={{ duration: 0.05 }}
               />
@@ -275,18 +345,20 @@ export default function ScrollCanvasAnimation({
         )}
       </AnimatePresence>
 
-      {/* ── Scroll progress dots (right edge) ── */}
-      <div style={{
-        position: 'absolute',
-        right: '1.25rem',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem',
-        zIndex: 20,
-        pointerEvents: 'none',
-      }}>
+      {/* ── Scroll progress dots (right edge on desktop only) ── */}
+      <div
+        className="hidden md:flex"
+        style={{
+          position: 'absolute',
+          right: '1.25rem',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          flexDirection: 'column',
+          gap: '0.5rem',
+          zIndex: 20,
+          pointerEvents: 'none',
+        }}
+      >
         {STORY_BEATS.map((b) => {
           const isActive = b.id === activeStory;
           return (

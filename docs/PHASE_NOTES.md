@@ -11,3 +11,14 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 3. **Important files:** `client/vite.config.ts` (Tailwind Vite plugin configuration), `client/src/index.css` (Tailwind v4 entry and design system CSS custom properties), `client/src/main.tsx` (CSS root import).
 4. **How it was tested:** All 1,078 files were scanned to confirm zero 0-byte and zero BOM files exist; verified Tailwind utility compilation by rendering a temporary red proof box (`bg-red-600 text-white p-6 font-bold text-center`) on the live browser and capturing Playwright screenshots at 1440px and 375px before cleanly restoring the landing page.
 5. **Remaining limitations:** The sticky canvas narrative overlay on the landing page slightly overlaps the hero action buttons on narrow 375px mobile viewports, which is scheduled for remediation in Stage B.
+
+---
+
+## Stage B: Landing-Page Scroll Animation (`/`)
+
+1. **What it does:** Renders a high-performance 198-frame scroll-scrubbed canvas animation illustrating an electronic device (laptop) teardown on the landing hero, communicating the recoverable materials and environmental urgency of e-waste recycling.
+2. **How it works:** Loads 198 lightweight JPG frames (`/frames/ezgif-frame-001.jpg`..`198.jpg`) into memory, draws each frame to an HTML5 canvas scaled for high-DPI screens based on scroll distance, and displays synchronized story beat cards using brand color tokens (`#14170F`, `#F4F1E9`, `#2F4E3A`, `#B5652D`, `#E4DCC6`, `#6B8F71`).
+3. **Important files:** `client/src/components/ScrollCanvasAnimation.tsx` (canvas rendering engine, story beat synchronization, preload progress, and responsive layout logic), `client/src/pages/Landing.tsx` (sticky hero container and CTA layout), `client/public/frames/` (198 optimized 768x768 JPG frames).
+4. **How it was tested:** Verified that all 198 frames return HTTP 200 with zero failures; verified zero console errors; captured Playwright screenshots at 1440px desktop across 0%, 25%, 50%, 75%, and 100% scroll progress; and proved on 375px mobile that the narrative card no longer collides with the primary CTA buttons at 0% scroll.
+5. **Remaining limitations:** Mobile users with reduced motion or bandwidth restrictions receive a static frame, though further bandwidth optimizations (e.g. WebP format) could be considered in future production iterations.
+

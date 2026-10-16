@@ -159,11 +159,11 @@ export default function Landing() {
           <motion.div
             style={{ y: heroTextY, opacity: heroOpacity, position: 'relative', zIndex: 10, height: '100%', display: 'flex', alignItems: 'center' }}
           >
-            <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 2rem', width: '100%' }}>
+            <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 w-full">
               <div style={{ maxWidth: '42rem' }}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 0.75rem', borderRadius: '9999px', border: '1px solid color-mix(in srgb, var(--signal) 30%, transparent)', background: 'color-mix(in srgb, var(--signal) 10%, transparent)', marginBottom: '2rem' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 0.75rem', borderRadius: '9999px', border: '1px solid color-mix(in srgb, var(--signal) 30%, transparent)', background: 'color-mix(in srgb, var(--signal) 10%, transparent)', marginBottom: '1.25rem' }}
                 >
                   <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--signal)', animation: 'pulse 2s infinite' }} />
                   <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--signal)', letterSpacing: '0.05em' }}>Campus E-Waste Management — LPU, Phagwara</span>
