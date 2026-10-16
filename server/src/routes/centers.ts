@@ -1,4 +1,4 @@
-﻿import { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { Center } from '../models/Center';
 
 const router = Router();
