@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
@@ -16,9 +16,7 @@ import {
   Layers,
   ArrowRight,
   Filter,
-  Lock,
-  ShieldCheck,
-  Delete,
+  ShieldAlert,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -109,267 +107,10 @@ function StatusBadge({ status }: { status: PickupStatus }) {
   );
 }
 
-// ─── Glassmorphism PIN Gate ──────────────────────────────────────────────────
-
-const DEMO_PIN = '2026';
-
-function AdminPinGate({ onAuthorize }: { onAuthorize: () => void }) {
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState(false);
-  const [isShaking, setIsShaking] = useState(false);
-  const hiddenInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    hiddenInputRef.current?.focus();
-  }, []);
-
-  const handleDigit = (digit: string) => {
-    if (pin.length < 4) {
-      const next = pin + digit;
-      setPin(next);
-      setError(false);
-      if (next.length === 4) {
-        if (next === DEMO_PIN) {
-          onAuthorize();
-        } else {
-          setError(true);
-          setIsShaking(true);
-          setTimeout(() => {
-            setIsShaking(false);
-            setPin('');
-          }, 650);
-        }
-      }
-    }
-  };
-
-  const handleBackspace = () => {
-    setPin((prev) => prev.slice(0, -1));
-    setError(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key >= '0' && e.key <= '9') {
-      handleDigit(e.key);
-    } else if (e.key === 'Backspace') {
-      handleBackspace();
-    }
-  };
-
-  return (
-    <div className="relative min-h-[75vh] flex items-center justify-center px-4 py-12">
-      {/* Ambient background glows for authentic glass refraction */}
-      <div
-        className="pointer-events-none absolute -top-10 left-1/4 h-72 w-72 rounded-full opacity-25 blur-3xl"
-        style={{ background: 'var(--moss)' }}
-      />
-      <div
-        className="pointer-events-none absolute -bottom-10 right-1/4 h-72 w-72 rounded-full opacity-25 blur-3xl"
-        style={{ background: 'var(--copper)' }}
-      />
-
-      {/* Hidden real input for mobile virtual keyboards */}
-      <input
-        ref={hiddenInputRef}
-        type="tel"
-        pattern="[0-9]*"
-        maxLength={4}
-        value={pin}
-        onChange={(e) => {
-          const val = e.target.value.replace(/\D/g, '');
-          if (val.length <= 4) {
-            setPin(val);
-            if (val.length === 4) {
-              if (val === DEMO_PIN) onAuthorize();
-              else {
-                setError(true);
-                setIsShaking(true);
-                setTimeout(() => {
-                  setIsShaking(false);
-                  setPin('');
-                }, 650);
-              }
-            }
-          }
-        }}
-        className="sr-only"
-        tabIndex={0}
-      />
-
-      {/* Frosted Glass Modal Card */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          x: isShaking ? [-12, 12, -8, 8, -4, 4, 0] : 0,
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 400,
-          damping: 28,
-        }}
-        onClick={() => hiddenInputRef.current?.focus()}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
-        className="relative z-10 w-full max-w-sm rounded-3xl p-8 shadow-2xl backdrop-blur-xl outline-none"
-        style={{
-          background: 'color-mix(in srgb, var(--paper) 75%, rgba(255, 255, 255, 0.45))',
-          border: '1px solid rgba(255, 255, 255, 0.65)',
-          boxShadow: '0 24px 60px -12px rgba(20, 23, 15, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        }}
-      >
-        {/* Lock Icon */}
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border"
-          style={{
-            background: 'color-mix(in srgb, var(--moss) 12%, transparent)',
-            borderColor: 'color-mix(in srgb, var(--moss) 30%, transparent)',
-            color: 'var(--moss)',
-          }}
-        >
-          {error ? <Lock size={26} className="text-[var(--rust)]" /> : <ShieldCheck size={26} />}
-        </div>
-
-        <div className="text-center">
-          <span
-            className="inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider mb-1"
-            style={{
-              background: 'color-mix(in srgb, var(--signal) 15%, transparent)',
-              color: 'var(--moss)',
-            }}
-          >
-            LPU Collector Portal
-          </span>
-          <h2
-            className="text-2xl font-semibold tracking-tight"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--ink)' }}
-          >
-            Team Verification
-          </h2>
-          <p className="mt-1 text-xs opacity-60 leading-relaxed" style={{ color: 'var(--ink)' }}>
-            Enter your 4-digit campus dispatch PIN to access collection orders.
-          </p>
-        </div>
-
-        {/* 4 PIN Indicators */}
-        <div className="my-6 flex justify-center gap-3.5">
-          {[0, 1, 2, 3].map((index) => {
-            const isFilled = pin.length > index;
-            return (
-              <motion.div
-                key={index}
-                animate={{
-                  scale: isFilled ? [1, 1.2, 1] : 1,
-                  borderColor: error ? 'var(--rust)' : isFilled ? 'var(--moss)' : 'var(--sand)',
-                }}
-                transition={{ duration: 0.2 }}
-                className="flex h-11 w-11 items-center justify-center rounded-xl border-2 transition-colors"
-                style={{
-                  background: isFilled
-                    ? 'color-mix(in srgb, var(--moss) 18%, transparent)'
-                    : 'rgba(255, 255, 255, 0.4)',
-                }}
-              >
-                {isFilled && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="h-3 w-3 rounded-full"
-                    style={{ background: error ? 'var(--rust)' : 'var(--moss)' }}
-                  />
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Error message */}
-        {error && (
-          <p className="mb-4 text-center text-xs font-medium" style={{ color: 'var(--rust)' }}>
-            Incorrect PIN. Please re-enter.
-          </p>
-        )}
-
-        {/* Tactile Keypad */}
-        <div className="grid grid-cols-3 gap-2">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-            <motion.button
-              key={digit}
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={() => handleDigit(digit)}
-              className="flex h-11 items-center justify-center rounded-xl text-base font-semibold transition shadow-sm"
-              style={{
-                background: 'rgba(255, 255, 255, 0.65)',
-                color: 'var(--ink)',
-                border: '1px solid rgba(255, 255, 255, 0.8)',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              {digit}
-            </motion.button>
-          ))}
-          <div />
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={() => handleDigit('0')}
-            className="flex h-11 items-center justify-center rounded-xl text-base font-semibold transition shadow-sm"
-            style={{
-              background: 'rgba(255, 255, 255, 0.65)',
-              color: 'var(--ink)',
-              border: '1px solid rgba(255, 255, 255, 0.8)',
-              fontFamily: 'var(--font-body)',
-            }}
-          >
-            0
-          </motion.button>
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={handleBackspace}
-            aria-label="Backspace"
-            className="flex h-11 items-center justify-center rounded-xl transition shadow-sm opacity-70 hover:opacity-100"
-            style={{
-              background: 'rgba(255, 255, 255, 0.65)',
-              color: 'var(--ink)',
-              border: '1px solid rgba(255, 255, 255, 0.8)',
-            }}
-          >
-            <Delete size={18} />
-          </motion.button>
-        </div>
-
-        {/* Quick Demo Autofill */}
-        <div className="mt-5 pt-4 border-t text-center" style={{ borderColor: 'rgba(20, 23, 15, 0.08)' }}>
-          <button
-            type="button"
-            onClick={() => {
-              setPin('2026');
-              setTimeout(() => onAuthorize(), 150);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium transition hover:scale-[1.03]"
-            style={{
-              background: 'color-mix(in srgb, var(--sand) 50%, white)',
-              borderColor: 'var(--sand)',
-              color: 'var(--ink)',
-              opacity: 0.8,
-            }}
-          >
-            <span>Demo PIN: <strong>2026</strong> (Click to unlock)</span>
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
 // ─── Main Admin Component ─────────────────────────────────────────────────────
 
 export default function Admin() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pickups, setPickups] = useState<PickupRecord[]>([]);
+    const [pickups, setPickups] = useState<PickupRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -467,10 +208,26 @@ export default function Admin() {
 
   return (
     <main className="min-h-screen pt-24 pb-20" style={{ background: 'var(--paper)' }}>
-      {!isAuthenticated ? (
-        <AdminPinGate onAuthorize={() => setIsAuthenticated(true)} />
-      ) : (
+      
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Demo-Only Administration Banner */}
+          <div
+            className="mb-8 rounded-xl border p-4 text-xs sm:text-sm font-medium flex items-start sm:items-center gap-3 shadow-xs"
+            style={{
+              background: 'color-mix(in srgb, var(--copper) 10%, var(--paper))',
+              borderColor: 'color-mix(in srgb, var(--copper) 30%, transparent)',
+              color: 'var(--ink)',
+            }}
+          >
+            <ShieldAlert size={20} className="text-[var(--copper)] shrink-0 mt-0.5 sm:mt-0" />
+            <div className="flex-1">
+              <span className="font-semibold block sm:inline">Demo-Only Administration Interface — No Authentication</span>
+              <span className="opacity-75 sm:ml-2 block sm:inline text-xs">
+                (CHE110 Prototype. Sample Data Only. Allows demonstrative collector status updates: Requested → Scheduled → Collected.)
+              </span>
+            </div>
+          </div>
+
           {/* Header */}
           <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
@@ -522,19 +279,7 @@ export default function Admin() {
                 <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </button>
-              <button
-                onClick={() => setIsAuthenticated(false)}
-                className="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-sm font-medium transition hover:scale-[1.02] active:scale-[0.98]"
-                style={{
-                  borderColor: 'var(--sand)',
-                  background: 'var(--paper)',
-                  color: 'var(--ink)',
-                  opacity: 0.75,
-                }}
-              >
-                <Lock size={14} />
-                <span>Lock</span>
-              </button>
+              
             </div>
           </div>
 
@@ -1100,7 +845,6 @@ export default function Admin() {
           </>
         )}
       </div>
-      )}
     </main>
   );
 }

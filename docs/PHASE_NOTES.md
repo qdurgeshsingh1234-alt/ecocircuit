@@ -72,6 +72,17 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Verified lookup for `sample.student1@lpu.in` via URL query param and form submission, validated that 3 pickup records and 3 chart bars rendered, confirmed session persistence across page refreshes, and captured desktop (1440px) and mobile (375px) screenshots without console errors.
 5. **Remaining limitations:** No password authentication is required for lookup, operating as an open student prototype lookup system.
 
+---
+
+## Stage H: Demo Administration Portal (`/admin`)
+
+1. **What it does:** Provides a collector administration interface for LPU campus collectors to inspect, filter, and advance pickup request statuses (`Requested → Scheduled → Collected`).
+2. **How it works:** Removes gimmick PIN entry gates in favor of an unauthenticated demonstration interface prominently labeled with a "Demo-Only Administration Interface" banner; executes optimistic status updates via `PATCH /api/pickups/:id`; provides real-time search across tracking IDs, campus hostels, and contact names; and renders a responsive table on desktop and compact cards on mobile.
+3. **Important files:** `client/src/pages/Admin.tsx` (collector table, status mutation triggers, search & filter controls, mobile cards), `server/src/routes/pickups.ts` (`PATCH /:id` status transition endpoint).
+4. **How it was tested:** Navigated to `/admin` to verify immediate table rendering without authentication prompts, executed status mutation from `requested` to `scheduled` and verified instant UI state update and backend confirmation, and captured desktop (1440px) and mobile (375px) screenshots without console errors.
+5. **Remaining limitations:** Prototype is intentionally unauthenticated for academic assessment; production deployment would require JWT tokens, session cookies, and role-based access control (RBAC).
+
+
 
 
 
