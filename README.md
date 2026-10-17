@@ -1,6 +1,6 @@
 # EcoCircuit — E-Waste Collection & Management Platform
 
-A portfolio-grade web application built for CHE110 Environmental Studies. EcoCircuit helps communities and individuals locate certified e-waste drop-off points, schedule doorstep collections, understand hazardous materials in discarded electronics, and track personal environmental impact metrics.
+A portfolio-grade web application built for CHE110 Environmental Studies (CA1, Topic 12: E-Waste Collection and Management Platform) for Lovely Professional University (LPU), Phagwara, Punjab. EcoCircuit helps campus students and staff locate sample e-waste drop-off points, request scheduled hostel-block and department collections, understand hazardous materials in discarded electronics, and track personal environmental impact metrics.
 
 ---
 

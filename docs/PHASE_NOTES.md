@@ -22,3 +22,13 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Verified that all 198 frames return HTTP 200 with zero failures; verified zero console errors; captured Playwright screenshots at 1440px desktop across 0%, 25%, 50%, 75%, and 100% scroll progress; and proved on 375px mobile that the narrative card no longer collides with the primary CTA buttons at 0% scroll.
 5. **Remaining limitations:** Mobile users with reduced motion or bandwidth restrictions receive a static frame, though further bandwidth optimizations (e.g. WebP format) could be considered in future production iterations.
 
+---
+
+## Stage C: LPU Content, Shared Categories & Dead File Cleanup
+
+1. **What it does:** Re-grounds all copy and data strictly around Lovely Professional University (LPU) and the Phagwara/Jalandhar area, unifying categories into 7 official CPCB slugs and removing legacy NCR/doorstep phrasing.
+2. **How it works:** Shares canonical slugs (`it-equipment`, `mobiles-accessories`, `batteries`, `large-appliances`, `small-appliances`, `lighting`, `cables-peripherals`) between client and server, seeding 8 sample drop-off and recycler points with verified coordinates.
+3. **Important files:** `client/src/data/categories.ts` (canonical client dataset), `server/src/categories.ts` (server mirror), `server/src/seed.ts` (8 LPU-grounded sample centers).
+4. **How it was tested:** Deleted orphaned `ewasteCategories.ts`, verified exact string matching for all 7 slugs, and ran automated whole-word regex scans confirming 0 matches for Delhi, NCR, or doorstep.
+5. **Remaining limitations:** Center records are hardcoded sample prototypes for academic evaluation and do not represent active commercial logistics contracts.
+
