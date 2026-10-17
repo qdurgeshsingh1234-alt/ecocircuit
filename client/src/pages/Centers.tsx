@@ -4,11 +4,21 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  MapPin, Clock, ExternalLink, Calendar, Navigation, Building2,
-  Truck, Recycle, Search, RotateCcw, AlertCircle, Compass,
-  Layers
+  MapPin,
+  Clock,
+  ExternalLink,
+  Calendar,
+  Navigation,
+  Building2,
+  Truck,
+  Recycle,
+  Search,
+  RotateCcw,
+  AlertCircle,
+  Compass,
+  Layers,
 } from 'lucide-react';
-import { SectionHeading, Reveal } from '../components/ui';
+import { SectionHeading } from '../components/ui';
 import { CATEGORIES } from '../data/categories';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -30,7 +40,6 @@ export interface CenterItem {
 }
 
 // ── LPU campus centre coordinates ─────────────────────────────────────────────
-// Approx LPU Campus centre: Phagwara, Punjab (31.255, 75.705)
 const LPU_CENTER: [number, number] = [31.255, 75.705];
 
 // ── Haversine distance calculator ─────────────────────────────────────────────
@@ -55,14 +64,14 @@ function formatDistance(distKm: number): string {
   return `${distKm.toFixed(1)} km from campus centre`;
 }
 
-// ── Custom DivIcon generator (brand colors, avoids Vite marker asset bugs) ────
+// ── Custom DivIcon generator ──────────────────────────────────────────────────
 function createDivIcon(type: CenterType, isSelected: boolean) {
   const color =
     type === 'campus-point'
-      ? '#2F4E3A' // moss / signal
+      ? '#2F4E3A'
       : type === 'collection-drive'
-      ? '#B5652D' // copper
-      : '#14170F'; // ink
+      ? '#B5652D'
+      : '#14170F';
 
   const w = isSelected ? 36 : 28;
   const h = isSelected ? 46 : 36;
@@ -75,10 +84,10 @@ function createDivIcon(type: CenterType, isSelected: boolean) {
       align-items: center;
       justify-content: center;
       position: relative;
-      filter: drop-shadow(0 4px 6px rgba(20,23,15,0.35));
+      filter: drop-shadow(0 4px 8px rgba(20,23,15,0.4));
       cursor: pointer;
-      transform: ${isSelected ? 'scale(1.15)' : 'scale(1)'};
-      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'};
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     ">
       <svg width="${w}" height="${h}" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M16 0C7.16344 0 0 7.16344 0 16C0 26 13 38.5 15.3 40.5C15.7 40.85 16.3 40.85 16.7 40.5C19 38.5 32 26 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}" stroke="#F4F1E9" stroke-width="2.2"/>
@@ -111,27 +120,27 @@ const TYPE_CONFIG: Record<
   'campus-point': {
     label: 'Campus Drop-off',
     icon: Building2,
-    color: 'var(--moss)',
-    bg: 'rgba(47, 78, 58, 0.1)',
-    border: 'rgba(47, 78, 58, 0.25)',
+    color: '#2F4E3A',
+    bg: 'rgba(47, 78, 58, 0.12)',
+    border: 'rgba(47, 78, 58, 0.3)',
   },
   'collection-drive': {
     label: 'Collection Drive',
     icon: Truck,
-    color: 'var(--copper)',
-    bg: 'rgba(181, 101, 45, 0.1)',
-    border: 'rgba(181, 101, 45, 0.25)',
+    color: '#B5652D',
+    bg: 'rgba(181, 101, 45, 0.12)',
+    border: 'rgba(181, 101, 45, 0.3)',
   },
   'recycler': {
     label: 'Authorized Recycler',
     icon: Recycle,
-    color: 'var(--ink)',
+    color: '#14170F',
     bg: 'rgba(20, 23, 15, 0.08)',
-    border: 'rgba(20, 23, 15, 0.2)',
+    border: 'rgba(20, 23, 15, 0.25)',
   },
 };
 
-// ── Map controller component for smooth programmatic panning ──────────────────
+// ── Map controller component ──────────────────────────────────────────────────
 function MapController({
   target,
   zoom,
@@ -183,7 +192,7 @@ function MapController({
   return null;
 }
 
-// ── Main Page Component ───────────────────────────────────────────────────────
+// ── Main Centers Page Component ───────────────────────────────────────────────
 export default function Centers() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category') || 'all';
@@ -200,7 +209,6 @@ export default function Centers() {
 
   const markerRefs = useRef<Record<string, L.Marker | null>>({});
 
-  // Category map for pretty pills
   const categoryMap = useMemo(() => {
     const map = new Map<string, { name: string; shortName: string; color: string }>();
     for (const c of CATEGORIES) {
@@ -209,7 +217,6 @@ export default function Centers() {
     return map;
   }, []);
 
-  // Fetch centers from backend with category query
   const fetchCenters = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -219,16 +226,13 @@ export default function Centers() {
           ? `/api/centers?category=${encodeURIComponent(categoryParam)}`
           : '/api/centers';
       const res = await fetch(endpoint);
-      if (!res.ok) {
-        throw new Error(`Failed to load centers (${res.status})`);
-      }
+      if (!res.ok) throw new Error(`Failed to load centers (${res.status})`);
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         const mapped: CenterItem[] = data.data.map((c: any) => ({
           ...c,
           distanceKm: haversineDistanceKm(LPU_CENTER[0], LPU_CENTER[1], c.lat, c.lng),
         }));
-        // Sort ascending by distance from LPU campus centre
         mapped.sort((a, b) => a.distanceKm - b.distanceKm);
         setCenters(mapped);
       } else {
@@ -245,7 +249,6 @@ export default function Centers() {
     fetchCenters();
   }, [fetchCenters]);
 
-  // Client-side filtering by type & text search
   const filteredCenters = useMemo(() => {
     return centers.filter((center) => {
       const matchesType = typeFilter === 'all' || center.type === typeFilter;
@@ -259,31 +262,27 @@ export default function Centers() {
     });
   }, [centers, typeFilter, searchQuery]);
 
-  // Handle category chip selection & URL synchronization
+  const selectedCenter = useMemo(() => {
+    return centers.find((c) => c._id === selectedId) || null;
+  }, [centers, selectedId]);
+
   const handleCategoryChange = (slug: string) => {
     const nextParams = new URLSearchParams(searchParams);
-    if (slug === 'all') {
-      nextParams.delete('category');
-    } else {
-      nextParams.set('category', slug);
-    }
+    if (slug === 'all') nextParams.delete('category');
+    else nextParams.set('category', slug);
     setSearchParams(nextParams);
   };
 
-  // Select center from list -> pan map & open popup
   const handleSelectFromList = (center: CenterItem) => {
     setSelectedId(center._id);
     setMapTarget([center.lat, center.lng]);
     setMapZoom(15);
     setTimeout(() => {
       const marker = markerRefs.current[center._id];
-      if (marker) {
-        marker.openPopup();
-      }
+      if (marker) marker.openPopup();
     }, 120);
   };
 
-  // Select center from marker -> scroll card into view in sidebar
   const handleMarkerClick = (center: CenterItem) => {
     setSelectedId(center._id);
     setMapTarget([center.lat, center.lng]);
@@ -293,14 +292,12 @@ export default function Centers() {
     }
   };
 
-  // Reset view to default LPU campus centre
   const handleResetMap = () => {
     setSelectedId(null);
     setMapTarget(LPU_CENTER);
     setMapZoom(13);
   };
 
-  // Reset all active filters
   const handleResetAllFilters = () => {
     setSearchQuery('');
     setTypeFilter('all');
@@ -309,162 +306,356 @@ export default function Centers() {
   };
 
   return (
-    <main className="pt-24 pb-16 min-h-screen bg-[var(--paper)]">
-      <div className="max-w-content mx-auto px-4 md:px-6">
-
+    <main className="min-h-screen pt-24 pb-20 bg-circuit-soil">
+      <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 space-y-10">
         {/* ── Page Header ────────────────────────────────────────────── */}
-        <div className="mb-8">
+        <div>
           <SectionHeading
-            eyebrow="Drop-off locations"
-            title="Collection centers near LPU"
-            subtitle="Find e-waste bins across Lovely Professional University campus and authorized recyclers in the Phagwara–Jalandhar corridor."
+            eyebrow="Campus Drop-off Network"
+            title="Collection points across LPU campus"
+            subtitle="Locate official e-waste bins across Lovely Professional University hostel blocks, student centers, and authorized recyclers in Phagwara."
           />
 
-          {/* Location badge & sample data disclaimer */}
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[var(--moss)]/10 text-[var(--moss)] border border-[var(--moss)]/20">
-              <Compass size={13} />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#2F4E3A]/10 text-[#2F4E3A] border border-[#2F4E3A]/25">
+              <Compass size={13} className="text-[#B5652D]" />
               Centred at LPU Campus, Phagwara (31.255° N, 75.705° E)
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--copper)]/10 text-[var(--copper)] border border-[var(--copper)]/20">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-[#B5652D]/12 text-[#B5652D] border border-[#B5652D]/25">
               Sample data
             </span>
-            <span className="text-xs text-[var(--ink)]/50">
-              All drop-off points, collection dates and recyclers are simulated for demonstration.
+            <span className="text-xs text-[#14170F]/50">
+              All drop-off points, operating schedules, and recyclers are simulated for demonstration.
             </span>
           </div>
         </div>
 
-        {/* ── Filters Bar ────────────────────────────────────────────── */}
-        <Reveal delay={0.05}>
-          <div className="p-4 sm:p-5 mb-8 rounded-2xl bg-[var(--sand)]/40 border border-[var(--sand)] space-y-4">
-
-            {/* Row 1: Search + Type Filter */}
-            <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-              <div className="relative flex-1">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ink)]/40" />
-                <input
-                  type="text"
-                  placeholder="Search by center name, hostel block, or area…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 text-sm bg-[var(--paper)] border border-[var(--sand)] rounded-lg text-[var(--ink)] placeholder:text-[var(--ink)]/40 focus:outline-none focus:border-[var(--signal)] focus:ring-1 focus:ring-[var(--signal)] transition-all"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--ink)]/40 hover:text-[var(--ink)]"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              {/* Type filter chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-                <span className="text-xs font-medium text-[var(--ink)]/50 mr-1 shrink-0 flex items-center gap-1">
-                  <Layers size={13} /> Type:
-                </span>
+        {/* ── Streamlined Tactile Filter Dock ──────────────────────────── */}
+        <div className="card-3d-tactile p-6 bg-[#F4F1E9] space-y-4">
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-lg">
+              <Search
+                size={18}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#14170F]/45 pointer-events-none"
+              />
+              <input
+                type="text"
+                placeholder="Search by center name, hostel block, or facility…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-[#14170F]/20 bg-[#F4F1E9] text-[#14170F] placeholder:text-[#14170F]/40 outline-none focus:border-[#2F4E3A] focus:ring-1 focus:ring-[#2F4E3A] shadow-inner"
+              />
+              {searchQuery && (
                 <button
-                  onClick={() => setTypeFilter('all')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all shrink-0 ${
-                    typeFilter === 'all'
-                      ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)] shadow-xs'
-                      : 'bg-[var(--paper)] text-[var(--ink)]/70 border-[var(--sand)] hover:bg-[var(--sand)]/60'
-                  }`}
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-[#14170F]/50 hover:text-[#14170F]"
                 >
-                  All types
+                  Clear
                 </button>
-                {(['campus-point', 'collection-drive', 'recycler'] as CenterType[]).map((type) => {
-                  const cfg = TYPE_CONFIG[type];
-                  const Icon = cfg.icon;
-                  const isSelected = typeFilter === type;
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => setTypeFilter(type)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all shrink-0 ${
-                        isSelected
-                          ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)] shadow-xs'
-                          : 'bg-[var(--paper)] text-[var(--ink)]/70 border-[var(--sand)] hover:bg-[var(--sand)]/60'
-                      }`}
-                    >
-                      <Icon size={12} />
-                      {cfg.label}
-                    </button>
-                  );
-                })}
-              </div>
+              )}
             </div>
 
-            {/* Row 2: Category chips (reads & writes to ?category=) */}
-            <div className="pt-2 border-t border-[var(--sand)] flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              <span className="text-xs font-medium text-[var(--ink)]/50 shrink-0">
-                Category:
+            {/* Center Type Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
+              <span className="text-xs font-mono font-bold text-[#14170F]/60 mr-1 shrink-0 flex items-center gap-1">
+                <Layers size={13} /> Type:
               </span>
               <button
-                onClick={() => handleCategoryChange('all')}
-                className={`px-3 py-1 text-xs font-medium rounded-full border transition-all shrink-0 ${
-                  categoryParam === 'all'
-                    ? 'bg-[var(--moss)] text-[var(--paper)] border-[var(--moss)] shadow-xs'
-                    : 'bg-[var(--paper)] text-[var(--ink)]/70 border-[var(--sand)] hover:bg-[var(--sand)]/50'
+                type="button"
+                onClick={() => setTypeFilter('all')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all cursor-pointer shrink-0 ${
+                  typeFilter === 'all'
+                    ? 'bg-[#14170F] text-[#F4F1E9] border-[#14170F] shadow-xs font-semibold'
+                    : 'bg-[#E4DCC6]/60 text-[#14170F] border-[#14170F]/15 hover:bg-[#E4DCC6]'
                 }`}
               >
-                All items
+                All types
               </button>
-              {CATEGORIES.map((cat) => {
-                const isSelected = categoryParam === cat.slug;
+              {(['campus-point', 'collection-drive', 'recycler'] as CenterType[]).map((type) => {
+                const cfg = TYPE_CONFIG[type];
+                const Icon = cfg.icon;
+                const isSelected = typeFilter === type;
                 return (
                   <button
-                    key={cat.slug}
-                    onClick={() => handleCategoryChange(cat.slug)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border transition-all shrink-0 ${
+                    key={type}
+                    type="button"
+                    onClick={() => setTypeFilter(type)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-all cursor-pointer shrink-0 ${
                       isSelected
-                        ? 'bg-[var(--moss)] text-[var(--paper)] border-[var(--moss)] shadow-xs'
-                        : 'bg-[var(--paper)] text-[var(--ink)]/70 border-[var(--sand)] hover:bg-[var(--sand)]/50'
+                        ? 'bg-[#14170F] text-[#F4F1E9] border-[#14170F] shadow-xs font-semibold'
+                        : 'bg-[#E4DCC6]/60 text-[#14170F] border-[#14170F]/15 hover:bg-[#E4DCC6]'
                     }`}
                   >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: isSelected ? '#fff' : cat.color }}
-                    />
-                    {cat.shortName}
+                    <Icon size={12} />
+                    {cfg.label}
                   </button>
                 );
               })}
             </div>
-
           </div>
-        </Reveal>
 
-        {/* ── Two-Column Layout (Mobile: Map on top via order-1, List below via order-2) ── */}
+          {/* Category Filter Chips */}
+          <div className="pt-3 border-t border-[#14170F]/10 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <span className="text-xs font-mono font-bold text-[#14170F]/60 shrink-0">
+              Accepted Category:
+            </span>
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('all')}
+              className={`px-3 py-1 text-xs font-medium rounded-full border transition-all cursor-pointer shrink-0 ${
+                categoryParam === 'all'
+                  ? 'bg-[#2F4E3A] text-[#F4F1E9] border-[#2F4E3A] shadow-xs font-semibold'
+                  : 'bg-[#E4DCC6]/60 text-[#14170F] border-[#14170F]/15 hover:bg-[#E4DCC6]'
+              }`}
+            >
+              All Categories
+            </button>
+            {CATEGORIES.map((cat) => {
+              const isSelected = categoryParam === cat.slug;
+              return (
+                <button
+                  key={cat.slug}
+                  type="button"
+                  onClick={() => handleCategoryChange(cat.slug)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border transition-all cursor-pointer shrink-0 ${
+                    isSelected
+                      ? 'bg-[#2F4E3A] text-[#F4F1E9] border-[#2F4E3A] shadow-xs font-semibold'
+                      : 'bg-[#E4DCC6]/60 text-[#14170F] border-[#14170F]/15 hover:bg-[#E4DCC6]'
+                  }`}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: isSelected ? '#F4F1E9' : cat.color }}
+                  />
+                  {cat.shortName}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── True 12-Column Split-Screen Command Center ────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column (5 Cols): Vertical Stack of Center Cards */}
+          <div className="order-2 lg:order-1 col-span-1 lg:col-span-5 space-y-4">
+            {/* Summary Row */}
+            <div className="flex items-center justify-between px-1 pb-1 border-b border-[#14170F]/10">
+              <span className="text-xs font-mono text-[#14170F]/80">
+                {loading
+                  ? 'Locating collection points…'
+                  : `Showing ${filteredCenters.length} drop-off points sorted by distance`}
+              </span>
+              {(categoryParam !== 'all' || typeFilter !== 'all' || searchQuery) && (
+                <button
+                  type="button"
+                  onClick={handleResetAllFilters}
+                  className="text-xs text-[#B5652D] hover:underline inline-flex items-center gap-1 font-semibold cursor-pointer"
+                >
+                  <RotateCcw size={11} /> Reset filters
+                </button>
+              )}
+            </div>
 
-          {/* ── MAP COLUMN: Order 1 on mobile, Order 2 on desktop ────────── */}
-          <div className="order-1 lg:order-2 col-span-1 lg:col-span-5 xl:col-span-5">
-            <div className="lg:sticky lg:top-28 rounded-xl border border-[var(--sand)] bg-[var(--paper)] overflow-hidden flex flex-col h-[340px] sm:h-[400px] lg:h-[calc(100vh-8.5rem)] lg:min-h-[580px]">
+            {/* Loading skeletons */}
+            {loading && (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="card-3d-tactile p-6 bg-[#F4F1E9] animate-pulse space-y-3">
+                    <div className="h-5 w-24 bg-[#E4DCC6] rounded" />
+                    <div className="h-6 w-3/4 bg-[#E4DCC6] rounded" />
+                    <div className="h-4 w-1/2 bg-[#E4DCC6] rounded" />
+                  </div>
+                ))}
+              </div>
+            )}
 
-              {/* Map Header Toolbar */}
-              <div className="px-4 sm:px-5 py-3 bg-[var(--sand)]/50 border-b border-[var(--sand)] flex items-center justify-between shrink-0">
-                <div>
-                  <h3 className="text-xs sm:text-sm font-semibold text-[var(--ink)] flex items-center gap-2">
-                    <Compass size={15} className="text-[var(--moss)]" />
-                    Interactive Map
-                  </h3>
-                  <p className="text-[10px] sm:text-[11px] text-[var(--ink)]/50">
-                    Click any marker to view details and get directions
-                  </p>
+            {/* Error state */}
+            {!loading && error && (
+              <div className="card-3d-tactile p-8 bg-[#F4F1E9] border-[#9B4A3E]/30 text-center space-y-3">
+                <AlertCircle size={36} className="mx-auto text-[#9B4A3E]" />
+                <h3 className="text-base text-[#14170F] font-bold">Unable to load centers</h3>
+                <p className="text-xs text-[#14170F]/70 max-w-md mx-auto">{error}</p>
+                <button
+                  type="button"
+                  onClick={fetchCenters}
+                  className="btn-3d-copper px-4 py-2 text-xs font-semibold rounded-xl"
+                >
+                  Retry request
+                </button>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!loading && !error && filteredCenters.length === 0 && (
+              <div className="card-3d-tactile p-12 bg-[#F4F1E9] text-center space-y-4">
+                <Compass size={40} className="mx-auto text-[#14170F]/30" />
+                <h3 className="text-base font-serif font-bold text-[#14170F]">
+                  No drop-off points match your filters
+                </h3>
+                <p className="text-xs text-[#14170F]/60 max-w-sm mx-auto">
+                  Try clearing your search query or switching to "All Categories".
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResetAllFilters}
+                  className="btn-3d-moss px-4 py-2 text-xs font-semibold rounded-xl"
+                >
+                  Reset all filters
+                </button>
+              </div>
+            )}
+
+            {/* Cards List */}
+            {!loading && !error && filteredCenters.length > 0 && (
+              <div className="space-y-4 max-h-[820px] overflow-y-auto pr-1">
+                {filteredCenters.map((center) => {
+                  const typeCfg = TYPE_CONFIG[center.type];
+                  const TypeIcon = typeCfg.icon;
+                  const isSelected = selectedId === center._id;
+
+                  return (
+                    <div
+                      key={center._id}
+                      id={`center-card-${center._id}`}
+                      onClick={() => handleSelectFromList(center)}
+                      className={`card-3d-tactile p-6 cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-l-4 border-l-[#B5652D] bg-[#E4DCC6]/35 shadow-md'
+                          : 'hover:border-[#2F4E3A]/40'
+                      }`}
+                    >
+                      {/* Top Badges */}
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold"
+                          style={{
+                            backgroundColor: typeCfg.bg,
+                            color: typeCfg.color,
+                            border: `1px solid ${typeCfg.border}`,
+                          }}
+                        >
+                          <TypeIcon size={12} />
+                          {typeCfg.label}
+                        </span>
+
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#B5652D]/12 text-[#B5652D] border border-[#B5652D]/20">
+                          Sample data
+                        </span>
+
+                        <span className="ml-auto text-xs font-mono font-semibold text-[#2F4E3A] bg-[#2F4E3A]/10 px-2.5 py-0.5 rounded-lg border border-[#2F4E3A]/20 flex items-center gap-1">
+                          <Navigation size={11} className="text-[#B5652D]" />
+                          {formatDistance(center.distanceKm)}
+                        </span>
+                      </div>
+
+                      {/* Center Name */}
+                      <h3 className="text-base sm:text-lg font-serif font-bold text-[#14170F] group-hover:text-[#2F4E3A] transition-colors">
+                        {center.name}
+                      </h3>
+
+                      {/* Address & Hours */}
+                      <div className="mt-2.5 space-y-1.5 text-xs text-[#14170F]/75">
+                        <div className="flex items-start gap-2">
+                          <MapPin size={14} className="shrink-0 mt-0.5 text-[#B5652D]" />
+                          <span className="leading-relaxed font-medium">{center.address}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock size={13} className="shrink-0 text-[#6B8F71]" />
+                          <span>{center.hours}</span>
+                        </div>
+                      </div>
+
+                      {/* Accepted Categories */}
+                      <div className="mt-3.5 pt-2.5 border-t border-[#14170F]/10">
+                        <span className="text-[10px] font-mono font-bold text-[#14170F]/50 uppercase tracking-wider block mb-1.5">
+                          Accepted Categories:
+                        </span>
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                          {center.categories.map((catSlug) => {
+                            const info = categoryMap.get(catSlug);
+                            return (
+                              <span
+                                key={catSlug}
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E4DCC6]/60 text-[#14170F] border border-[#14170F]/10 shrink-0"
+                              >
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{ backgroundColor: info?.color || '#6B8F71' }}
+                                />
+                                {info ? info.shortName : catSlug}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-[#14170F]/10">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectFromList(center);
+                          }}
+                          className="btn-3d-moss px-3 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Compass size={12} /> Focus on Map
+                        </button>
+
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${center.lat},${center.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-3 py-1.5 text-xs font-medium rounded-xl border border-[#14170F]/15 bg-[#F4F1E9] hover:bg-[#E4DCC6] text-[#14170F] transition inline-flex items-center gap-1"
+                        >
+                          <ExternalLink size={12} /> Directions
+                        </a>
+
+                        <Link
+                          to={`/pickup?category=${center.categories[0] || ''}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="btn-3d-copper px-3 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center gap-1 ml-auto"
+                        >
+                          <Calendar size={12} /> Collection
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right Column (7 Cols): Commanding Tall Sticky Map */}
+          <div className="order-1 lg:order-2 col-span-1 lg:col-span-7 lg:sticky lg:top-24">
+            <div className="h-[520px] lg:h-[760px] rounded-2xl overflow-hidden border-2 border-[#14170F]/15 shadow-[0_8px_0_0_#E4DCC6,0_20px_40px_rgba(20,23,15,0.12)] bg-[#F4F1E9] flex flex-col relative">
+              {/* Floating Telemetry HUD Bar */}
+              <div className="px-5 py-3.5 bg-[#E4DCC6]/60 border-b border-[#14170F]/15 flex items-center justify-between shrink-0 font-mono text-xs z-10">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5 text-[#2F4E3A] font-semibold">
+                    <Compass size={14} className="text-[#B5652D]" />
+                    {selectedCenter
+                      ? `${selectedCenter.lat.toFixed(3)}° N, ${selectedCenter.lng.toFixed(3)}° E`
+                      : '31.255° N, 75.705° E (LPU Campus)'}
+                  </span>
+                  <span className="hidden sm:inline text-[#14170F]/30">|</span>
+                  <span className="text-[#14170F]/70 hidden sm:inline">
+                    Showing <strong>{filteredCenters.length}</strong> of {centers.length} Points
+                  </span>
                 </div>
                 <button
+                  type="button"
                   onClick={handleResetMap}
-                  title="Reset to campus view"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--paper)] border border-[var(--sand)] text-[var(--ink)]/70 hover:text-[var(--ink)] hover:bg-[var(--sand)]/60 transition-colors"
+                  className="px-2.5 py-1 rounded-lg border border-[#14170F]/15 bg-[#F4F1E9] hover:bg-[#E4DCC6] text-[#14170F] text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition active:scale-95"
                 >
-                  <RotateCcw size={11} /> Reset
+                  <RotateCcw size={11} /> Reset View
                 </button>
               </div>
 
-              {/* Interactive Map Area */}
+              {/* Map Canvas */}
               <div className="flex-1 w-full relative">
                 <MapContainer
                   center={LPU_CENTER}
@@ -491,7 +682,7 @@ export default function Centers() {
                       }}
                     >
                       <Popup>
-                        <div className="p-3.5 max-w-[280px] space-y-2.5 font-[var(--font-body)]">
+                        <div className="p-4 max-w-[280px] space-y-2.5 font-[var(--font-body)]">
                           <div className="flex items-center justify-between gap-2">
                             <span
                               className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded"
@@ -502,41 +693,41 @@ export default function Centers() {
                             >
                               {TYPE_CONFIG[center.type].label}
                             </span>
-                            <span className="text-[10px] font-medium text-[var(--copper)] bg-[var(--copper)]/10 px-1.5 py-0.5 rounded">
-                              Sample data
+                            <span className="text-[10px] font-mono text-[#B5652D] bg-[#B5652D]/10 px-1.5 py-0.5 rounded">
+                              Sample
                             </span>
                           </div>
 
-                          <h4 className="text-xs font-bold text-[var(--ink)] leading-snug">
+                          <h4 className="text-sm font-bold text-[#14170F] leading-snug">
                             {center.name}
                           </h4>
 
-                          <p className="text-[11px] text-[var(--ink)]/70 flex items-start gap-1">
-                            <MapPin size={12} className="shrink-0 mt-0.5 text-[var(--copper)]" />
+                          <p className="text-xs text-[#14170F]/70 flex items-start gap-1">
+                            <MapPin size={13} className="shrink-0 mt-0.5 text-[#B5652D]" />
                             {center.address}
                           </p>
 
-                          <p className="text-[11px] text-[var(--ink)]/60 flex items-center gap-1">
-                            <Clock size={12} className="shrink-0 text-[var(--ink)]/40" />
+                          <p className="text-xs text-[#14170F]/60 flex items-center gap-1">
+                            <Clock size={12} className="shrink-0 text-[#6B8F71]" />
                             {center.hours}
                           </p>
 
-                          <div className="text-[11px] font-semibold text-[var(--moss)] bg-[var(--moss)]/8 px-2 py-1 rounded border border-[var(--moss)]/15">
+                          <div className="text-xs font-semibold text-[#2F4E3A] bg-[#2F4E3A]/8 px-2 py-1 rounded border border-[#2F4E3A]/15">
                             📍 {formatDistance(center.distanceKm)}
                           </div>
 
-                          <div className="pt-2 border-t border-[var(--sand)] flex items-center gap-2">
+                          <div className="pt-2 border-t border-[#14170F]/10 flex items-center justify-between gap-2">
                             <a
                               href={`https://www.google.com/maps/dir/?api=1&destination=${center.lat},${center.lng}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs font-medium text-[var(--copper)] hover:underline inline-flex items-center gap-1"
+                              className="text-xs font-medium text-[#B5652D] hover:underline inline-flex items-center gap-1"
                             >
-                              Get directions <ExternalLink size={11} />
+                              Directions <ExternalLink size={11} />
                             </a>
                             <Link
                               to={`/pickup?category=${center.categories[0] || ''}`}
-                              className="text-xs font-medium text-[var(--moss)] hover:underline ml-auto"
+                              className="text-xs font-medium text-[#2F4E3A] hover:underline"
                             >
                               Collection →
                             </Link>
@@ -549,254 +740,43 @@ export default function Centers() {
               </div>
 
               {/* Map Footer Legend */}
-              <div className="px-4 py-2.5 bg-[var(--sand)]/40 border-t border-[var(--sand)] flex items-center justify-between text-[11px] text-[var(--ink)]/65">
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+              <div className="px-5 py-3 bg-[#E4DCC6]/40 border-t border-[#14170F]/15 flex items-center justify-between text-xs text-[#14170F]/70 font-mono">
+                <div className="flex flex-wrap items-center gap-4">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[var(--moss)]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#2F4E3A]" />
                     Campus Drop-off
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[var(--copper)]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#B5652D]" />
                     Collection Drive
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[var(--ink)]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#14170F]" />
                     Authorized Recycler
                   </span>
                 </div>
               </div>
-
             </div>
           </div>
-
-          {/* ── LIST COLUMN: Clean tactile cards column ── */}
-          <div className="order-2 lg:order-1 col-span-1 lg:col-span-7 xl:col-span-7 rounded-xl border border-[var(--sand)] bg-[var(--paper)] p-4 sm:p-6 lg:max-h-[calc(100vh-8.5rem)] lg:min-h-[580px] lg:overflow-y-auto space-y-4">
-
-            {/* Result count & active filter summary */}
-            <div className="flex items-center justify-between px-1 pb-1 border-b border-[var(--sand)]/60">
-              <p className="text-xs font-semibold text-[var(--ink)]/75">
-                {loading
-                  ? 'Locating collection points…'
-                  : `Showing ${filteredCenters.length} campus drop-off ${
-                      filteredCenters.length === 1 ? 'point' : 'points'
-                    } sorted by distance`}
-              </p>
-              {(categoryParam !== 'all' || typeFilter !== 'all' || searchQuery) && (
-                <button
-                  onClick={handleResetAllFilters}
-                  className="text-xs text-[var(--copper)] hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
-                >
-                  <RotateCcw size={12} /> Reset filters
-                </button>
-              )}
-            </div>
-
-            {/* Loading state skeleton */}
-            {loading && (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="p-5 rounded-xl border border-[var(--sand)] bg-[var(--sand)]/30 animate-pulse space-y-4"
-                  >
-                    <div className="flex gap-2">
-                      <div className="h-5 w-24 bg-[var(--sand)] rounded-md" />
-                      <div className="h-5 w-20 bg-[var(--sand)] rounded-md" />
-                    </div>
-                    <div className="h-6 w-3/4 bg-[var(--sand)] rounded-md" />
-                    <div className="h-4 w-1/2 bg-[var(--sand)] rounded-md" />
-                    <div className="h-8 w-full bg-[var(--sand)]/50 rounded-lg" />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Error state */}
-            {!loading && error && (
-              <div className="p-8 rounded-xl border border-[var(--rust)]/30 bg-[var(--rust)]/5 text-center space-y-3">
-                <AlertCircle size={36} className="mx-auto text-[var(--rust)] opacity-80" />
-                <h3 className="text-base text-[var(--ink)] font-semibold">Unable to load centers</h3>
-                <p className="text-xs text-[var(--ink)]/60 max-w-md mx-auto">{error}</p>
-                <button
-                  onClick={fetchCenters}
-                  className="px-4 py-2 rounded-xl text-xs font-medium bg-[var(--copper)] text-[var(--paper)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-                >
-                  Retry request
-                </button>
-              </div>
-            )}
-
-            {/* Empty state */}
-            {!loading && !error && filteredCenters.length === 0 && (
-              <div className="p-12 rounded-xl border border-[var(--sand)] bg-[var(--paper)] text-center space-y-4">
-                <Compass size={40} className="mx-auto text-[var(--ink)]/30" />
-                <h3 className="text-base font-semibold text-[var(--ink)]" style={{ fontFamily: 'var(--font-heading)' }}>
-                  No drop-off points found
-                </h3>
-                <p className="text-xs text-[var(--ink)]/60 max-w-sm mx-auto">
-                  No collection points match the current filters. Try selecting "All items" or clearing your search term.
-                </p>
-                <button
-                  onClick={handleResetAllFilters}
-                  className="px-4 py-2 rounded-xl text-xs font-medium bg-[var(--moss)] text-[var(--paper)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-                >
-                  Reset all filters
-                </button>
-              </div>
-            )}
-
-            {/* Centers list: Distinct elevated cards */}
-            {!loading && !error && filteredCenters.length > 0 && (
-              <div className="space-y-4">
-                {filteredCenters.map((center) => {
-                  const typeCfg = TYPE_CONFIG[center.type];
-                  const TypeIcon = typeCfg.icon;
-                  const isSelected = selectedId === center._id;
-
-                  return (
-                    <div
-                      key={center._id}
-                      id={`center-card-${center._id}`}
-                      onClick={() => handleSelectFromList(center)}
-                      className={`group p-5 rounded-xl border transition-all duration-200 cursor-pointer ${
-                        isSelected
-                          ? 'border-[var(--moss)] bg-[color-mix(in_srgb,var(--sand)_40%,var(--paper))] shadow-md ring-1 ring-[var(--moss)]'
-                          : 'border-[var(--sand)] bg-[var(--paper)] hover:bg-[color-mix(in_srgb,var(--sand)_25%,var(--paper))] hover:border-[var(--moss)]/50 hover:shadow-xs'
-                      }`}
-                    >
-                      {/* Top badge row: Type, Sample data, Distance */}
-                      <div className="flex flex-wrap items-center gap-2 mb-2.5">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold"
-                          style={{
-                            backgroundColor: typeCfg.bg,
-                            color: typeCfg.color,
-                            border: `1px solid ${typeCfg.border}`,
-                          }}
-                        >
-                          <TypeIcon size={12} />
-                          {typeCfg.label}
-                        </span>
-
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--copper)]/10 text-[var(--copper)] border border-[var(--copper)]/20">
-                          Sample data
-                        </span>
-
-                        <span className="ml-auto text-xs font-semibold text-[var(--moss)] bg-[var(--moss)]/10 px-2.5 py-0.5 rounded-lg border border-[var(--moss)]/20 flex items-center gap-1">
-                          <Navigation size={11} />
-                          {formatDistance(center.distanceKm)}
-                        </span>
-                      </div>
-
-                      {/* Prominent Center Name */}
-                      <h3
-                        className="text-base sm:text-lg font-semibold tracking-tight text-[var(--ink)] group-hover:text-[var(--moss)] transition-colors"
-                        style={{ fontFamily: 'var(--font-heading)' }}
-                      >
-                        {center.name}
-                      </h3>
-
-                      {/* Info Rows: Address and Hours */}
-                      <div className="mt-2.5 space-y-1.5 text-xs text-[var(--ink)]/70">
-                        <div className="flex items-start gap-2">
-                          <MapPin size={14} className="shrink-0 mt-0.5 text-[var(--copper)]" />
-                          <span className="leading-relaxed font-medium">{center.address}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Clock size={13} className="shrink-0 text-[var(--signal)]" />
-                          <span>{center.hours}</span>
-                        </div>
-                      </div>
-
-                      {/* Accepted categories: Horizontal scrolling pills */}
-                      <div className="mt-3.5 pt-2.5 border-t border-[var(--sand)]/60">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-[10px] font-bold text-[var(--ink)]/50 uppercase tracking-wider shrink-0">
-                            Accepted categories:
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                          {center.categories.map((catSlug) => {
-                            const info = categoryMap.get(catSlug);
-                            return (
-                              <span
-                                key={catSlug}
-                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[var(--sand)]/50 text-[var(--ink)]/80 border border-[var(--sand)] shrink-0"
-                              >
-                                <span
-                                  className="w-1.5 h-1.5 rounded-full"
-                                  style={{ backgroundColor: info?.color || 'var(--signal)' }}
-                                />
-                                {info ? info.shortName : catSlug}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Actions Row */}
-                      <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-[var(--sand)]/50">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectFromList(center);
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[var(--moss)] text-[var(--paper)] transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-xs"
-                        >
-                          <Compass size={13} /> Focus on map
-                        </button>
-
-                        <a
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${center.lat},${center.lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--sand)]/50 border border-[var(--sand)] transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                        >
-                          <ExternalLink size={13} /> Get directions
-                        </a>
-
-                        <Link
-                          to={`/pickup?category=${center.categories[0] || ''}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[var(--copper)] text-[var(--paper)] transition hover:scale-[1.02] active:scale-[0.98] ml-auto shadow-xs"
-                        >
-                          <Calendar size={13} /> Schedule Pickup
-                        </Link>
-                      </div>
-
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-          </div>
-
         </div>
 
         {/* ── Bottom Footnote / Campus Collection Notice ────────────── */}
-        <Reveal delay={0.15}>
-          <div className="mt-16 p-6 rounded-2xl bg-[var(--sand)]/40 border border-[var(--sand)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h4 className="text-sm font-semibold text-[var(--ink)]">
-                Can’t carry large items to a campus collection point?
-              </h4>
-              <p className="text-xs text-[var(--ink)]/60 max-w-2xl leading-relaxed">
-                EcoCircuit runs scheduled collections for hostel rooms and academic departments across LPU. Request a collector visit instead of transporting bulky electronics yourself.
-              </p>
-            </div>
-            <Link
-              to="/pickup"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-medium bg-[var(--copper)] text-[var(--paper)] hover:bg-[#a05626] transition-all shrink-0 shadow-sm"
-            >
-              <Truck size={14} /> Request hostel / dept collection
-            </Link>
+        <div className="p-6 rounded-2xl bg-[#E4DCC6]/40 border border-[#14170F]/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h4 className="text-sm font-serif font-bold text-[#14170F]">
+              Can’t carry large items to a campus collection point?
+            </h4>
+            <p className="text-xs text-[#14170F]/70 max-w-2xl leading-relaxed">
+              EcoCircuit operates scheduled collector visits for hostel rooms and academic departments across LPU. Request a collector visit instead of transporting bulky electronics yourself.
+            </p>
           </div>
-        </Reveal>
-
+          <Link
+            to="/pickup"
+            className="btn-3d-copper px-5 py-2.5 rounded-xl text-xs font-semibold inline-flex items-center gap-2 shrink-0"
+          >
+            <Truck size={14} /> Request hostel / dept collection
+          </Link>
+        </div>
       </div>
     </main>
   );
