@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart,
@@ -11,7 +11,7 @@ import {
   Cell,
 } from 'recharts';
 import { Mail, Leaf, Wind, Package, Clock, CheckCircle2, AlertCircle, ChevronRight, LogOut, Info } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -346,18 +346,12 @@ function MetricCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="relative overflow-hidden rounded-2xl border p-6 shadow-[0_0_40px_rgba(47,78,58,0.1)] transition-all hover:shadow-[0_0_45px_rgba(47,78,58,0.15)]"
-      style={{ background: 'var(--paper)', borderColor: 'var(--sand)' }}
+      className="relative overflow-hidden rounded-xl border border-[var(--sand)] bg-[var(--paper)] p-6 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm"
     >
-      {/* Ambient background glow */}
-      <div
-        className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full blur-2xl opacity-15"
-        style={{ background: accent }}
-      />
       <div className="relative z-10 flex items-start gap-4">
         <div
-          className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-xs"
-          style={{ background: `color-mix(in srgb, ${accent} 14%, transparent)` }}
+          className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+          style={{ background: `color-mix(in srgb, ${accent} 12%, transparent)` }}
         >
           <Icon size={24} style={{ color: accent }} />
         </div>
@@ -372,6 +366,9 @@ function MetricCard({
           <p className="mt-2 text-sm font-medium" style={{ color: 'var(--ink)', opacity: 0.65 }}>
             {label}
           </p>
+          <span className="mt-1 inline-block text-[10px] font-medium text-[var(--copper)]">
+            Estimated impact (Sample data)
+          </span>
         </div>
       </div>
     </motion.div>
@@ -389,8 +386,7 @@ function PickupCard({ pickup, index }: { pickup: PickupRecord; index: number }) 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.06 }}
-      className="rounded-2xl border p-5 transition hover:shadow-sm"
-      style={{ background: 'var(--paper)', borderColor: 'var(--sand)' }}
+      className="rounded-xl border border-[var(--sand)] bg-[var(--paper)] p-5 transition hover:shadow-xs"
     >
       {/* Header row */}
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
@@ -402,8 +398,8 @@ function PickupCard({ pickup, index }: { pickup: PickupRecord; index: number }) 
             Tracking ID
           </p>
           <p
-            className="font-semibold tracking-wide"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--ink)', fontSize: '1rem' }}
+            className="font-semibold tracking-wide font-mono"
+            style={{ color: 'var(--ink)', fontSize: '1rem' }}
           >
             {pickup.trackingId}
           </p>
@@ -468,7 +464,7 @@ function DashboardView({ email, pickups, onLogout }: { email: string; pickups: P
       kg: p.estimatedImpactKg,
     }));
 
-  const barColors = ['var(--moss)', 'var(--copper)', 'var(--signal)', 'var(--rust)'];
+  const barColors = ['#2F4E3A', '#B5652D', '#6B8F71', '#9B4A3E'];
 
   return (
     <motion.div
@@ -495,10 +491,9 @@ function DashboardView({ email, pickups, onLogout }: { email: string; pickups: P
         </div>
         <button
           onClick={onLogout}
-          className="inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm transition hover:scale-[1.02] active:scale-[0.98]"
-          style={{ borderColor: 'var(--sand)', color: 'var(--ink)', opacity: 0.65 }}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--sand)] bg-[var(--paper)] px-3.5 py-2 text-xs font-medium text-[var(--ink)] hover:bg-[var(--sand)]/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
-          <LogOut size={14} /> Sign out
+          <LogOut size={13} /> Switch Email
         </button>
       </div>
 
@@ -630,31 +625,52 @@ function DashboardView({ email, pickups, onLogout }: { email: string; pickups: P
 // ─── Page Root ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [email, setEmail] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [email, setEmail] = useState<string | null>(() => {
+    return searchParams.get('email') || sessionStorage.getItem('ecocircuit_dashboard_email') || null;
+  });
   const [pickups, setPickups] = useState<PickupRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleEmailSubmit(submittedEmail: string) {
-    setEmail(submittedEmail);
+  const fetchPickups = useCallback(async (targetEmail: string) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/pickups?email=${encodeURIComponent(submittedEmail)}`);
+      const res = await fetch(`/api/pickups?email=${encodeURIComponent(targetEmail)}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Failed to load data');
       setPickups(json.data as PickupRecord[]);
+      sessionStorage.setItem('ecocircuit_dashboard_email', targetEmail);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const urlEmail = searchParams.get('email');
+    if (urlEmail) {
+      setEmail(urlEmail);
+      fetchPickups(urlEmail);
+    } else if (email) {
+      fetchPickups(email);
+    }
+  }, [fetchPickups]);
+
+  async function handleEmailSubmit(submittedEmail: string) {
+    setEmail(submittedEmail);
+    setSearchParams({ email: submittedEmail });
+    await fetchPickups(submittedEmail);
   }
 
   function handleLogout() {
     setEmail(null);
     setPickups([]);
     setError(null);
+    sessionStorage.removeItem('ecocircuit_dashboard_email');
+    setSearchParams({});
   }
 
   return (

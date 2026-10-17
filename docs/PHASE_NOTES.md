@@ -62,6 +62,17 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Walked through the live browser flow across all 5 wizard steps, submitted a test request with valid 10-digit phone number, verified the HTTP 201 response, validated that the generated tracking ID matched `/^ECO-[A-Z0-9]{6}$/`, and captured desktop (1440px initial & confirmation) and mobile (375px) screenshots.
 5. **Remaining limitations:** SMS confirmation gateway integration is simulated; confirmation details are delivered in-app on the final screen and queryable via dashboard.
 
+---
+
+## Stage G: User Impact Dashboard (`/dashboard`)
+
+1. **What it does:** Displays personalized recycling statistics, historical pickup requests, and an environmental impact bar chart for any student or staff email address.
+2. **How it works:** Persists the active lookup email in `sessionStorage` and synchronizes with URL search parameters (`?email=`); fetches records from `GET /api/pickups?email=...`; aggregates total kilograms diverted and CO2 emissions avoided; renders a Recharts bar chart styled with brand palette tokens (`#2F4E3A`, `#B5652D`, `#6B8F71`, `#9B4A3E`); and features a "Switch Email" button and sample presets.
+3. **Important files:** `client/src/pages/Dashboard.tsx` (dashboard view, Recharts bar graph, metric cards, session persistence), `server/src/routes/pickups.ts` (email query endpoint).
+4. **How it was tested:** Verified lookup for `sample.student1@lpu.in` via URL query param and form submission, validated that 3 pickup records and 3 chart bars rendered, confirmed session persistence across page refreshes, and captured desktop (1440px) and mobile (375px) screenshots without console errors.
+5. **Remaining limitations:** No password authentication is required for lookup, operating as an open student prototype lookup system.
+
+
 
 
 
