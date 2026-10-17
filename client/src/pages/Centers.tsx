@@ -64,6 +64,13 @@ function formatDistance(distKm: number): string {
   return `${distKm.toFixed(1)} km from campus centre`;
 }
 
+// ── Theme Mapping ─────────────────────────────────────────────────────────────
+function getCenterThemeClass(type: CenterType): string {
+  if (type === 'campus-point') return 'theme-card-emerald';
+  if (type === 'collection-drive') return 'theme-card-copper';
+  return 'theme-card-slate';
+}
+
 // ── Custom DivIcon generator ──────────────────────────────────────────────────
 function createDivIcon(type: CenterType, isSelected: boolean) {
   const color =
@@ -71,10 +78,10 @@ function createDivIcon(type: CenterType, isSelected: boolean) {
       ? '#2F4E3A'
       : type === 'collection-drive'
       ? '#B5652D'
-      : '#14170F';
+      : '#3B6E8C';
 
-  const w = isSelected ? 36 : 28;
-  const h = isSelected ? 46 : 36;
+  const w = isSelected ? 38 : 28;
+  const h = isSelected ? 48 : 36;
 
   const html = `
     <div style="
@@ -84,9 +91,9 @@ function createDivIcon(type: CenterType, isSelected: boolean) {
       align-items: center;
       justify-content: center;
       position: relative;
-      filter: drop-shadow(0 4px 8px rgba(20,23,15,0.4));
+      filter: drop-shadow(0 4px 10px rgba(20,23,15,0.45));
       cursor: pointer;
-      transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'};
+      transform: ${isSelected ? 'scale(1.25)' : 'scale(1)'};
       transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     ">
       <svg width="${w}" height="${h}" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -134,9 +141,9 @@ const TYPE_CONFIG: Record<
   'recycler': {
     label: 'Authorized Recycler',
     icon: Recycle,
-    color: '#14170F',
-    bg: 'rgba(20, 23, 15, 0.08)',
-    border: 'rgba(20, 23, 15, 0.25)',
+    color: '#3B6E8C',
+    bg: 'rgba(59, 110, 140, 0.12)',
+    border: 'rgba(59, 110, 140, 0.3)',
   },
 };
 
@@ -288,7 +295,7 @@ export default function Centers() {
     setMapTarget([center.lat, center.lng]);
     const cardEl = document.getElementById(`center-card-${center._id}`);
     if (cardEl) {
-      cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
@@ -306,7 +313,7 @@ export default function Centers() {
   };
 
   return (
-    <main className="min-h-screen pt-24 pb-20 bg-circuit-soil">
+    <main className="min-h-screen pt-24 pb-20 interactive-spotlight-bg">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 space-y-10">
         {/* ── Page Header ────────────────────────────────────────────── */}
         <div>
@@ -324,13 +331,13 @@ export default function Centers() {
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-[#B5652D]/12 text-[#B5652D] border border-[#B5652D]/25">
               Sample data
             </span>
-            <span className="text-xs text-[#14170F]/50">
+            <span className="text-xs text-[#14170F]/60">
               All drop-off points, operating schedules, and recyclers are simulated for demonstration.
             </span>
           </div>
         </div>
 
-        {/* ── Streamlined Tactile Filter Dock ──────────────────────────── */}
+        {/* ── Streamlined Filter Dock ──────────────────────────────────── */}
         <div className="card-3d-tactile p-6 bg-[#F4F1E9] space-y-4">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
             {/* Search Input */}
@@ -436,13 +443,13 @@ export default function Centers() {
           </div>
         </div>
 
-        {/* ── True 12-Column Split-Screen Command Center ────────────────── */}
+        {/* ── True 12-Column Split-Screen Command Center (ZERO INNER SCROLLBAR!) ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column (5 Cols): Vertical Stack of Center Cards */}
-          <div className="order-2 lg:order-1 col-span-1 lg:col-span-5 space-y-4">
+          {/* Left Column (5 Cols): Natural Flowing Stack of High-Contrast Cards */}
+          <div className="order-2 lg:order-1 col-span-1 lg:col-span-5 flex flex-col gap-5">
             {/* Summary Row */}
             <div className="flex items-center justify-between px-1 pb-1 border-b border-[#14170F]/10">
-              <span className="text-xs font-mono text-[#14170F]/80">
+              <span className="text-xs font-mono font-semibold text-[#14170F]">
                 {loading
                   ? 'Locating collection points…'
                   : `Showing ${filteredCenters.length} drop-off points sorted by distance`}
@@ -507,29 +514,33 @@ export default function Centers() {
               </div>
             )}
 
-            {/* Cards List */}
+            {/* Center Cards (Zero nested scrollbars: flows naturally with page) */}
             {!loading && !error && filteredCenters.length > 0 && (
-              <div className="space-y-4 max-h-[820px] overflow-y-auto pr-1">
+              <div className="flex flex-col gap-5">
                 {filteredCenters.map((center) => {
                   const typeCfg = TYPE_CONFIG[center.type];
                   const TypeIcon = typeCfg.icon;
                   const isSelected = selectedId === center._id;
+                  const themeClass = getCenterThemeClass(center.type);
 
                   return (
                     <div
                       key={center._id}
                       id={`center-card-${center._id}`}
                       onClick={() => handleSelectFromList(center)}
-                      className={`card-3d-tactile p-6 cursor-pointer transition-all ${
+                      onMouseEnter={() => {
+                        setMapTarget([center.lat, center.lng]);
+                      }}
+                      className={`${themeClass} p-6 rounded-2xl cursor-pointer transition-all duration-200 select-none ${
                         isSelected
-                          ? 'border-l-4 border-l-[#B5652D] bg-[#E4DCC6]/35 shadow-md'
-                          : 'hover:border-[#2F4E3A]/40'
+                          ? 'border-l-4 border-l-[#B5652D] ring-2 ring-[#B5652D]/40 scale-[1.01]'
+                          : 'hover:scale-[1.01]'
                       }`}
                     >
                       {/* Top Badges */}
                       <div className="flex flex-wrap items-center gap-2 mb-3">
                         <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold"
                           style={{
                             backgroundColor: typeCfg.bg,
                             color: typeCfg.color,
@@ -540,36 +551,37 @@ export default function Centers() {
                           {typeCfg.label}
                         </span>
 
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#B5652D]/12 text-[#B5652D] border border-[#B5652D]/20">
-                          Sample data
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#2F4E3A]/15 text-[#2F4E3A] border border-[#2F4E3A]/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#2F4E3A] animate-pulse" />
+                          OPEN NOW
                         </span>
 
-                        <span className="ml-auto text-xs font-mono font-semibold text-[#2F4E3A] bg-[#2F4E3A]/10 px-2.5 py-0.5 rounded-lg border border-[#2F4E3A]/20 flex items-center gap-1">
+                        <span className="ml-auto text-xs font-mono font-bold text-[#2F4E3A] bg-[#2F4E3A]/10 px-2.5 py-0.5 rounded-lg border border-[#2F4E3A]/20 flex items-center gap-1">
                           <Navigation size={11} className="text-[#B5652D]" />
                           {formatDistance(center.distanceKm)}
                         </span>
                       </div>
 
-                      {/* Center Name */}
-                      <h3 className="text-base sm:text-lg font-serif font-bold text-[#14170F] group-hover:text-[#2F4E3A] transition-colors">
+                      {/* Center Name (High Contrast) */}
+                      <h3 className="text-xl font-serif font-bold text-[#14170F] group-hover:text-[#2F4E3A] transition-colors">
                         {center.name}
                       </h3>
 
-                      {/* Address & Hours */}
-                      <div className="mt-2.5 space-y-1.5 text-xs text-[#14170F]/75">
+                      {/* Address & Hours (Crisp, High-Contrast Typography) */}
+                      <div className="mt-3 space-y-2 text-sm text-[#14170F]">
                         <div className="flex items-start gap-2">
-                          <MapPin size={14} className="shrink-0 mt-0.5 text-[#B5652D]" />
-                          <span className="leading-relaxed font-medium">{center.address}</span>
+                          <MapPin size={15} className="shrink-0 mt-0.5 text-[#B5652D]" />
+                          <span className="leading-relaxed font-semibold">{center.address}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Clock size={13} className="shrink-0 text-[#6B8F71]" />
-                          <span>{center.hours}</span>
+                          <Clock size={14} className="shrink-0 text-[#2F4E3A]" />
+                          <span className="font-medium text-[#14170F]/85">{center.hours}</span>
                         </div>
                       </div>
 
                       {/* Accepted Categories */}
-                      <div className="mt-3.5 pt-2.5 border-t border-[#14170F]/10">
-                        <span className="text-[10px] font-mono font-bold text-[#14170F]/50 uppercase tracking-wider block mb-1.5">
+                      <div className="mt-3.5 pt-3 border-t border-[#14170F]/10">
+                        <span className="text-[10px] font-mono font-bold text-[#14170F]/60 uppercase tracking-wider block mb-1.5">
                           Accepted Categories:
                         </span>
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
@@ -578,11 +590,11 @@ export default function Centers() {
                             return (
                               <span
                                 key={catSlug}
-                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E4DCC6]/60 text-[#14170F] border border-[#14170F]/10 shrink-0"
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#14170F]/5 text-[#14170F] border border-[#14170F]/15 shrink-0"
                               >
                                 <span
                                   className="w-1.5 h-1.5 rounded-full"
-                                  style={{ backgroundColor: info?.color || '#6B8F71' }}
+                                  style={{ backgroundColor: info?.color || '#2F4E3A' }}
                                 />
                                 {info ? info.shortName : catSlug}
                               </span>
@@ -599,9 +611,9 @@ export default function Centers() {
                             e.stopPropagation();
                             handleSelectFromList(center);
                           }}
-                          className="btn-3d-moss px-3 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+                          className="btn-3d-moss px-3.5 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
                         >
-                          <Compass size={12} /> Focus on Map
+                          <Compass size={13} /> Focus on Map
                         </button>
 
                         <a
@@ -609,7 +621,7 @@ export default function Centers() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="px-3 py-1.5 text-xs font-medium rounded-xl border border-[#14170F]/15 bg-[#F4F1E9] hover:bg-[#E4DCC6] text-[#14170F] transition inline-flex items-center gap-1"
+                          className="px-3.5 py-1.5 text-xs font-semibold rounded-xl border border-[#14170F]/20 bg-[#F4F1E9] hover:bg-[#E4DCC6] text-[#14170F] transition inline-flex items-center gap-1"
                         >
                           <ExternalLink size={12} /> Directions
                         </a>
@@ -617,7 +629,7 @@ export default function Centers() {
                         <Link
                           to={`/pickup?category=${center.categories[0] || ''}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="btn-3d-copper px-3 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center gap-1 ml-auto"
+                          className="btn-3d-copper px-3.5 py-1.5 text-xs font-semibold rounded-xl inline-flex items-center gap-1 ml-auto"
                         >
                           <Calendar size={12} /> Collection
                         </Link>
@@ -630,20 +642,20 @@ export default function Centers() {
           </div>
 
           {/* Right Column (7 Cols): Commanding Tall Sticky Map */}
-          <div className="order-1 lg:order-2 col-span-1 lg:col-span-7 lg:sticky lg:top-24">
-            <div className="h-[520px] lg:h-[760px] rounded-2xl overflow-hidden border-2 border-[#14170F]/15 shadow-[0_8px_0_0_#E4DCC6,0_20px_40px_rgba(20,23,15,0.12)] bg-[#F4F1E9] flex flex-col relative">
+          <div className="order-1 lg:order-2 col-span-1 lg:col-span-7 lg:sticky lg:top-24 h-[540px] lg:h-[calc(100vh-7.5rem)]">
+            <div className="h-full rounded-2xl overflow-hidden border-2 border-[#14170F]/20 shadow-[0_12px_32px_-8px_rgba(20,23,15,0.2)] bg-[#F4F1E9] flex flex-col relative">
               {/* Floating Telemetry HUD Bar */}
-              <div className="px-5 py-3.5 bg-[#E4DCC6]/60 border-b border-[#14170F]/15 flex items-center justify-between shrink-0 font-mono text-xs z-10">
+              <div className="px-5 py-3.5 bg-[#E4DCC6]/70 border-b border-[#14170F]/15 flex items-center justify-between shrink-0 font-mono text-xs z-10">
                 <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1.5 text-[#2F4E3A] font-semibold">
+                  <span className="flex items-center gap-1.5 text-[#2F4E3A] font-bold">
                     <Compass size={14} className="text-[#B5652D]" />
                     {selectedCenter
                       ? `${selectedCenter.lat.toFixed(3)}° N, ${selectedCenter.lng.toFixed(3)}° E`
                       : '31.255° N, 75.705° E (LPU Campus)'}
                   </span>
                   <span className="hidden sm:inline text-[#14170F]/30">|</span>
-                  <span className="text-[#14170F]/70 hidden sm:inline">
-                    Showing <strong>{filteredCenters.length}</strong> of {centers.length} Points
+                  <span className="text-[#14170F]/80 hidden sm:inline font-semibold">
+                    Showing {filteredCenters.length} of {centers.length} Points
                   </span>
                 </div>
                 <button
@@ -685,7 +697,7 @@ export default function Centers() {
                         <div className="p-4 max-w-[280px] space-y-2.5 font-[var(--font-body)]">
                           <div className="flex items-center justify-between gap-2">
                             <span
-                              className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded"
+                              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
                               style={{
                                 backgroundColor: TYPE_CONFIG[center.type].bg,
                                 color: TYPE_CONFIG[center.type].color,
@@ -693,7 +705,7 @@ export default function Centers() {
                             >
                               {TYPE_CONFIG[center.type].label}
                             </span>
-                            <span className="text-[10px] font-mono text-[#B5652D] bg-[#B5652D]/10 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-mono font-bold text-[#B5652D] bg-[#B5652D]/10 px-1.5 py-0.5 rounded">
                               Sample
                             </span>
                           </div>
@@ -702,17 +714,17 @@ export default function Centers() {
                             {center.name}
                           </h4>
 
-                          <p className="text-xs text-[#14170F]/70 flex items-start gap-1">
+                          <p className="text-xs text-[#14170F]/80 flex items-start gap-1 font-medium">
                             <MapPin size={13} className="shrink-0 mt-0.5 text-[#B5652D]" />
                             {center.address}
                           </p>
 
-                          <p className="text-xs text-[#14170F]/60 flex items-center gap-1">
-                            <Clock size={12} className="shrink-0 text-[#6B8F71]" />
+                          <p className="text-xs text-[#14170F]/70 flex items-center gap-1 font-medium">
+                            <Clock size={12} className="shrink-0 text-[#2F4E3A]" />
                             {center.hours}
                           </p>
 
-                          <div className="text-xs font-semibold text-[#2F4E3A] bg-[#2F4E3A]/8 px-2 py-1 rounded border border-[#2F4E3A]/15">
+                          <div className="text-xs font-bold text-[#2F4E3A] bg-[#2F4E3A]/10 px-2 py-1 rounded border border-[#2F4E3A]/20">
                             📍 {formatDistance(center.distanceKm)}
                           </div>
 
@@ -721,13 +733,13 @@ export default function Centers() {
                               href={`https://www.google.com/maps/dir/?api=1&destination=${center.lat},${center.lng}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs font-medium text-[#B5652D] hover:underline inline-flex items-center gap-1"
+                              className="text-xs font-bold text-[#B5652D] hover:underline inline-flex items-center gap-1"
                             >
                               Directions <ExternalLink size={11} />
                             </a>
                             <Link
                               to={`/pickup?category=${center.categories[0] || ''}`}
-                              className="text-xs font-medium text-[#2F4E3A] hover:underline"
+                              className="text-xs font-bold text-[#2F4E3A] hover:underline"
                             >
                               Collection →
                             </Link>
@@ -740,18 +752,18 @@ export default function Centers() {
               </div>
 
               {/* Map Footer Legend */}
-              <div className="px-5 py-3 bg-[#E4DCC6]/40 border-t border-[#14170F]/15 flex items-center justify-between text-xs text-[#14170F]/70 font-mono">
+              <div className="px-5 py-3 bg-[#E4DCC6]/50 border-t border-[#14170F]/15 flex items-center justify-between text-xs text-[#14170F] font-mono">
                 <div className="flex flex-wrap items-center gap-4">
-                  <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#2F4E3A]" />
                     Campus Drop-off
                   </span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#B5652D]" />
                     Collection Drive
                   </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#14170F]" />
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#3B6E8C]" />
                     Authorized Recycler
                   </span>
                 </div>
@@ -760,10 +772,10 @@ export default function Centers() {
           </div>
         </div>
 
-        {/* ── Bottom Footnote / Campus Collection Notice ────────────── */}
+        {/* ── Bottom Footnote ── */}
         <div className="p-6 rounded-2xl bg-[#E4DCC6]/40 border border-[#14170F]/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h4 className="text-sm font-serif font-bold text-[#14170F]">
+            <h4 className="text-base font-serif font-bold text-[#14170F]">
               Can’t carry large items to a campus collection point?
             </h4>
             <p className="text-xs text-[#14170F]/70 max-w-2xl leading-relaxed">

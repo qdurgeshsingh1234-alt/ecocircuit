@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Nav from './components/Nav';
 import Footer from './components/Footer';
@@ -9,6 +10,15 @@ import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
 
 export default function App() {
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
     <BrowserRouter>
       <Nav />

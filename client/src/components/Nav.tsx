@@ -37,87 +37,33 @@ function LogoMark({ size = 34 }: { size?: number }) {
   );
 }
 
-// Hero scroll ends at ~300vh on the landing page
-const HERO_SCROLL_END_VH = 300;
-
 export default function Nav() {
-  const [scrollState, setScrollState] = useState<'top' | 'animation' | 'solid'>('top');
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const vh = window.innerHeight;
-
-      if (location.pathname !== '/') {
-        setScrollState(scrollY > 20 ? 'solid' : 'top');
-        return;
-      }
-
-      const heroEnd = (HERO_SCROLL_END_VH / 100) * vh;
-      if (scrollY <= 40) {
-        setScrollState('top');
-      } else if (scrollY < heroEnd - vh * 0.1) {
-        setScrollState('animation');
-      } else {
-        setScrollState('solid');
-      }
-    };
-
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [location.pathname]);
-
   useEffect(() => setMobileOpen(false), [location]);
 
-  const isHome = location.pathname === '/';
-  const isDark = isHome && (scrollState === 'top' || scrollState === 'animation');
-
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isDark
-          ? 'bg-[#14170F]/85 backdrop-blur-md border-b border-[#F4F1E9]/10'
-          : 'bg-[#F4F1E9]/90 backdrop-blur-md border-b border-[#14170F]/10 shadow-[0_4px_12px_rgba(20,23,15,0.05)]'
-      }`}
-    >
-      <div className="max-w-[1440px] mx-auto flex items-center justify-between h-16 px-4 sm:px-8">
+    <header className="fixed top-3 inset-x-0 z-50 px-4 sm:px-8 pointer-events-none transition-all duration-300">
+      <div className="pointer-events-auto max-w-[1380px] mx-auto h-16 px-5 rounded-2xl bg-[#14170F]/95 backdrop-blur-xl border border-[#F4F1E9]/15 shadow-[0_12px_32px_-8px_rgba(20,23,15,0.45)] flex items-center justify-between">
         {/* Logo with 3D Rotating Hexagonal PCB-Leaf */}
         <Link to="/" className="flex items-center gap-3 group cursor-pointer">
           <div className="group-hover:rotate-12 group-hover:scale-110 transition-all duration-300">
             <LogoMark size={34} />
           </div>
           <div className="flex items-baseline gap-2">
-            <span
-              className={`font-serif text-xl font-bold tracking-tight transition-colors duration-200 ${
-                isDark ? 'text-[#F4F1E9]' : 'text-[#14170F]'
-              }`}
-            >
+            <span className="font-serif text-xl font-bold tracking-tight text-[#F4F1E9]">
               EcoCircuit
             </span>
-            <span
-              className={`hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-                isDark
-                  ? 'bg-[#F4F1E9]/10 border-[#F4F1E9]/20 text-[#F4F1E9]/70'
-                  : 'bg-[#14170F]/5 border-[#14170F]/10 text-[#14170F]/60'
-              }`}
-            >
+            <span className="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full border bg-[#F4F1E9]/10 border-[#F4F1E9]/20 text-[#F4F1E9]/80">
               LPU CAMPUS
             </span>
           </div>
         </Link>
 
-        {/* Desktop Navigation: Centered Tactile Pill Dock + 3D Button */}
+        {/* Desktop Navigation: Centered Dock + 3D CTA */}
         <div className="hidden md:flex items-center gap-4">
-          <nav
-            className={`flex items-center gap-1 p-1 rounded-full border ${
-              isDark
-                ? 'bg-[#F4F1E9]/10 border-[#F4F1E9]/15'
-                : 'bg-[#14170F]/5 border-[#14170F]/10'
-            }`}
-          >
+          <nav className="flex items-center gap-1.5 p-1 rounded-full border bg-[#F4F1E9]/10 border-[#F4F1E9]/15">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.to;
               return (
@@ -126,12 +72,8 @@ export default function Nav() {
                   to={link.to}
                   className={`relative px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
                     isActive
-                      ? isDark
-                        ? 'bg-[#B5652D] text-[#F4F1E9] shadow-xs'
-                        : 'bg-[#2F4E3A] text-[#F4F1E9] shadow-xs'
-                      : isDark
-                      ? 'text-[#F4F1E9]/80 hover:text-[#F4F1E9] hover:bg-[#F4F1E9]/10'
-                      : 'text-[#14170F]/70 hover:text-[#14170F] hover:bg-[#14170F]/10'
+                      ? 'bg-gradient-to-r from-[#2F4E3A] to-[#3B6349] text-[#F4F1E9] shadow-[0_2px_10px_rgba(107,143,113,0.4)] border border-[#6B8F71]/40 font-semibold'
+                      : 'text-[#F4F1E9]/80 hover:text-[#F4F1E9] hover:bg-[#F4F1E9]/10'
                   }`}
                 >
                   <span>{link.label}</span>
@@ -139,10 +81,8 @@ export default function Nav() {
                     <span
                       className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold ${
                         isActive
-                          ? 'bg-black/20 text-[#F4F1E9]'
-                          : isDark
-                          ? 'bg-[#B5652D]/30 text-[#F4F1E9]'
-                          : 'bg-[#B5652D]/15 text-[#B5652D]'
+                          ? 'bg-black/25 text-[#F4F1E9]'
+                          : 'bg-[#B5652D]/35 text-[#F4F1E9] border border-[#B5652D]/40'
                       }`}
                     >
                       <Lock size={9} className="mr-0.5 inline" /> PIN
@@ -165,9 +105,7 @@ export default function Nav() {
         {/* Mobile Hamburger Toggle */}
         <button
           onClick={() => setMobileOpen((prev) => !prev)}
-          className={`flex md:hidden p-2 rounded-xl transition cursor-pointer ${
-            isDark ? 'text-[#F4F1E9] hover:bg-white/10' : 'text-[#14170F] hover:bg-black/5'
-          }`}
+          className="flex md:hidden p-2 rounded-xl text-[#F4F1E9] hover:bg-white/10 transition cursor-pointer"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -178,13 +116,13 @@ export default function Nav() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="md:hidden overflow-hidden border-b border-[#14170F]/10 bg-[#F4F1E9]/95 backdrop-blur-xl shadow-xl"
+            className="pointer-events-auto mt-2 max-w-[1380px] mx-auto rounded-2xl bg-[#14170F]/95 backdrop-blur-xl border border-[#F4F1E9]/15 shadow-2xl overflow-hidden md:hidden"
           >
-            <div className="px-5 py-4 flex flex-col gap-2">
+            <div className="p-4 flex flex-col gap-2">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.to;
                 return (
@@ -194,13 +132,13 @@ export default function Nav() {
                     onClick={() => setMobileOpen(false)}
                     className={`px-4 py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-between ${
                       isActive
-                        ? 'bg-[#2F4E3A] text-[#F4F1E9]'
-                        : 'text-[#14170F] hover:bg-black/5'
+                        ? 'bg-gradient-to-r from-[#2F4E3A] to-[#3B6349] text-[#F4F1E9] border border-[#6B8F71]/40'
+                        : 'text-[#F4F1E9]/80 hover:bg-white/10'
                     }`}
                   >
                     <span>{link.label}</span>
                     {link.isProtected && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#B5652D]/20 text-[#B5652D]">
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#B5652D]/30 text-[#F4F1E9] border border-[#B5652D]/40">
                         <Lock size={10} className="inline mr-1" /> PIN Gate
                       </span>
                     )}
@@ -210,7 +148,7 @@ export default function Nav() {
               <Link
                 to="/pickup"
                 onClick={() => setMobileOpen(false)}
-                className="mt-2 btn-3d-copper py-2.5 text-center text-sm font-semibold rounded-xl block"
+                className="mt-1 btn-3d-copper py-2.5 text-center text-sm font-semibold rounded-xl block"
               >
                 Request Collection
               </Link>

@@ -14,11 +14,13 @@ import {
   Mail,
   Leaf,
   Layers,
-  ArrowRight,
   Filter,
   ShieldAlert,
   ShieldCheck,
   Lock,
+  LayoutGrid,
+  Kanban,
+  Check,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -43,37 +45,45 @@ interface PickupRecord {
 const STATUS_DETAILS: Record<
   PickupStatus,
   {
+    step: number;
     label: string;
     icon: typeof Clock;
-    bg: string;
+    bannerBg: string;
+    bannerBorder: string;
+    badgeBg: string;
     text: string;
     border: string;
-    description: string;
   }
 > = {
   requested: {
+    step: 1,
     label: 'Requested',
     icon: Clock,
-    bg: 'bg-[#B5652D]/10',
+    bannerBg: 'bg-[#FFF3E6]',
+    bannerBorder: 'border-[#B5652D]/25',
+    badgeBg: 'bg-[#B5652D]/15',
     text: 'text-[#B5652D]',
     border: 'border-[#B5652D]/30',
-    description: 'Awaiting collector schedule',
   },
   scheduled: {
+    step: 2,
     label: 'Scheduled',
     icon: AlertCircle,
-    bg: 'bg-[#6B8F71]/15',
-    text: 'text-[#2F4E3A]',
-    border: 'border-[#6B8F71]/30',
-    description: 'Pickup window confirmed',
+    bannerBg: 'bg-[#EBF3FA]',
+    bannerBorder: 'border-[#3B6E8C]/25',
+    badgeBg: 'bg-[#3B6E8C]/15',
+    text: 'text-[#3B6E8C]',
+    border: 'border-[#3B6E8C]/30',
   },
   collected: {
+    step: 3,
     label: 'Collected',
     icon: CheckCircle2,
-    bg: 'bg-[#2F4E3A]/15',
+    bannerBg: 'bg-[#E6F4EC]',
+    bannerBorder: 'border-[#2F4E3A]/25',
+    badgeBg: 'bg-[#2F4E3A]/15',
     text: 'text-[#2F4E3A]',
     border: 'border-[#2F4E3A]/30',
-    description: 'Received & routed to recycling',
   },
 };
 
@@ -90,20 +100,6 @@ function slugToLabel(slug: string) {
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
-}
-
-// ─── Status Badge Component ───────────────────────────────────────────────────
-function StatusBadge({ status }: { status: PickupStatus }) {
-  const config = STATUS_DETAILS[status];
-  const Icon = config.icon;
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${config.bg} ${config.text} ${config.border}`}
-    >
-      <Icon size={12} className="shrink-0" />
-      {config.label}
-    </span>
-  );
 }
 
 // ─── 3D Hardware PIN Authentication Gate ──────────────────────────────────────
@@ -149,7 +145,7 @@ function AdminPinGate({ onUnlock }: { onUnlock: () => void }) {
   });
 
   return (
-    <div className="py-12 px-4 flex flex-col items-center justify-center min-h-[75vh] bg-circuit-soil">
+    <div className="py-12 px-4 flex flex-col items-center justify-center min-h-[75vh]">
       <div className="w-full max-w-md card-3d-tactile p-8 bg-[#F4F1E9] relative overflow-hidden">
         {/* 4 Tactile Corner Copper Rivets */}
         <span className="absolute top-3.5 left-3.5 w-2.5 h-2.5 rounded-full bg-[#B5652D]/40 border border-[#14170F]/30" />
@@ -253,12 +249,167 @@ function AdminPinGate({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
+// ─── Tactile Dispatch Ticket Card Component ───────────────────────────────────
+function DispatchTicketCard({
+  item,
+  onStatusChange,
+  isUpdating,
+}: {
+  item: PickupRecord;
+  onStatusChange: (id: string, trackingId: string, status: PickupStatus) => void;
+  isUpdating: boolean;
+}) {
+  const config = STATUS_DETAILS[item.status];
+  const StatusIcon = config.icon;
+
+  return (
+    <div className="card-3d-tactile overflow-hidden bg-[#F4F1E9] flex flex-col justify-between">
+      {/* ── Top Status Banner Strip ── */}
+      <div className={`px-5 py-3 border-b ${config.bannerBg} ${config.bannerBorder} flex items-center justify-between`}>
+        <div className="flex items-center gap-2.5">
+          <span className="font-mono text-sm font-bold text-[#14170F] bg-[#14170F]/8 px-2.5 py-1 rounded-md border border-[#14170F]/10">
+            {item.trackingId}
+          </span>
+          <span className="text-xs font-mono text-[#14170F]/60 flex items-center gap-1">
+            <Calendar size={12} className="text-[#B5652D]" />
+            {formatDate(item.createdAt)}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs font-bold text-[#2F4E3A] bg-[#2F4E3A]/10 px-2.5 py-1 rounded-md border border-[#2F4E3A]/20">
+            ⚡ {item.estimatedImpactKg} kg
+          </span>
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono ${config.badgeBg} ${config.text}`}>
+            <StatusIcon size={12} />
+            {config.label}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Body Grid (2 Clean Columns) ── */}
+      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Left Column: Location & Window */}
+        <div className="space-y-2">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#14170F]/50 block">
+            Hostel / Pickup Point:
+          </span>
+          <div className="flex items-start gap-2">
+            <MapPin size={16} className="text-[#B5652D] shrink-0 mt-0.5" />
+            <span className="text-sm font-semibold text-[#14170F] leading-snug">
+              {item.address}
+            </span>
+          </div>
+          <div className="pt-1">
+            <span className="inline-block text-xs font-medium text-[#14170F]/80 bg-[#E4DCC6]/60 px-2.5 py-1 rounded-lg border border-[#14170F]/10">
+              🕒 Window: <strong>{item.preferredWindow}</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* Right Column: Contact & Categories */}
+        <div className="space-y-2">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#14170F]/50 block">
+            Student Contact:
+          </span>
+          <div className="text-xs space-y-1">
+            <p className="font-bold text-sm text-[#14170F] flex items-center gap-1.5">
+              <User size={13} className="text-[#2F4E3A]" />
+              {item.contactName}
+            </p>
+            <div className="flex flex-wrap gap-2 text-xs font-mono pt-0.5">
+              <a
+                href={`mailto:${item.contactEmail}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#14170F]/5 hover:bg-[#14170F]/10 text-[#14170F]"
+              >
+                <Mail size={11} className="text-[#B5652D]" />
+                {item.contactEmail}
+              </a>
+              <a
+                href={`tel:${item.contactPhone}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#14170F]/5 hover:bg-[#14170F]/10 text-[#14170F]"
+              >
+                <Phone size={11} className="text-[#2F4E3A]" />
+                {item.contactPhone}
+              </a>
+            </div>
+          </div>
+
+          <div className="pt-1 flex flex-wrap gap-1">
+            {item.categories.map((cat) => (
+              <span
+                key={cat}
+                className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#2F4E3A]/10 text-[#2F4E3A] border border-[#2F4E3A]/20"
+              >
+                {slugToLabel(cat)}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Bottom Interactive 3-Step Pipeline Bar ── */}
+      <div className="p-4 bg-[#E4DCC6]/25 border-t border-[#14170F]/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Visual Progress Track */}
+        <div className="flex items-center gap-2 text-xs font-mono">
+          <span className={`px-2 py-0.5 rounded font-bold ${item.status === 'requested' ? 'bg-[#B5652D] text-white' : 'bg-[#14170F]/10 text-[#14170F]'}`}>
+            1. Req
+          </span>
+          <span className="text-[#14170F]/30">━</span>
+          <span className={`px-2 py-0.5 rounded font-bold ${item.status === 'scheduled' ? 'bg-[#3B6E8C] text-white' : 'bg-[#14170F]/10 text-[#14170F]'}`}>
+            2. Sched
+          </span>
+          <span className="text-[#14170F]/30">━</span>
+          <span className={`px-2 py-0.5 rounded font-bold ${item.status === 'collected' ? 'bg-[#2F4E3A] text-white' : 'bg-[#14170F]/10 text-[#14170F]'}`}>
+            3. Done
+          </span>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 ml-auto">
+          {item.status !== 'scheduled' && (
+            <button
+              type="button"
+              onClick={() => onStatusChange(item._id, item.trackingId, 'scheduled')}
+              disabled={isUpdating}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold border border-[#3B6E8C]/40 text-[#3B6E8C] bg-[#3B6E8C]/10 hover:bg-[#3B6E8C]/20 transition cursor-pointer disabled:opacity-50"
+            >
+              Schedule Pickup →
+            </button>
+          )}
+          {item.status !== 'collected' && (
+            <button
+              type="button"
+              onClick={() => onStatusChange(item._id, item.trackingId, 'collected')}
+              disabled={isUpdating}
+              className="btn-3d-moss px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+            >
+              <Check size={12} /> Mark Collected
+            </button>
+          )}
+          {item.status !== 'requested' && (
+            <button
+              type="button"
+              onClick={() => onStatusChange(item._id, item.trackingId, 'requested')}
+              disabled={isUpdating}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-medium border border-[#14170F]/20 text-[#14170F]/70 hover:bg-[#E4DCC6] transition cursor-pointer disabled:opacity-50"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Admin Component ─────────────────────────────────────────────────────
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('ecocircuit_admin_auth') === 'true';
   });
 
+  const [viewMode, setViewMode] = useState<'tickets' | 'kanban'>('tickets');
   const [pickups, setPickups] = useState<PickupRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -361,14 +512,14 @@ export default function Admin() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen pt-24 pb-20 bg-circuit-soil">
+      <main className="min-h-screen pt-24 pb-20 interactive-spotlight-bg">
         <AdminPinGate onUnlock={handleUnlock} />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen pt-24 pb-20 bg-circuit-soil">
+    <main className="min-h-screen pt-24 pb-20 interactive-spotlight-bg">
       <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-14">
         {/* Demo-Only Administration Banner */}
         <div className="mb-8 rounded-2xl border border-[#B5652D]/30 bg-[#B5652D]/10 p-4 text-xs sm:text-sm font-medium flex items-start sm:items-center justify-between gap-3 shadow-xs">
@@ -379,7 +530,7 @@ export default function Admin() {
                 Demo-Only Administration Interface
               </span>
               <span className="opacity-75 sm:ml-2 block sm:inline text-xs text-[#14170F]">
-                (CHE110 Academic Prototype. Allows demonstrative collector status updates: Requested → Scheduled → Collected.)
+                (CHE110 Academic Prototype. Advance requests through: Requested → Scheduled → Collected.)
               </span>
             </div>
           </div>
@@ -388,7 +539,15 @@ export default function Admin() {
           </span>
         </div>
 
-        {/* Header with Lock Terminal Button */}
+        {/* Error notification banner if any */}
+        {error && (
+          <div className="mb-6 rounded-xl border border-[#9B4A3E]/30 bg-[#9B4A3E]/10 p-4 text-xs sm:text-sm text-[#9B4A3E] font-medium flex items-center gap-3">
+            <ShieldAlert size={18} className="shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Header with Lock Terminal & View Switcher */}
         <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <div className="flex items-center gap-2">
@@ -400,7 +559,7 @@ export default function Admin() {
               </span>
             </div>
             <h1 className="mt-2 text-3xl font-serif font-bold text-[#14170F] tracking-tight md:text-4xl">
-              Manage collection requests
+              Hostel Collection Dispatch Board
             </h1>
             <p className="mt-1 text-sm text-[#14170F]/70">
               Coordinate pickups across Lovely Professional University hostel blocks and academic departments.
@@ -408,20 +567,48 @@ export default function Admin() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* View Switcher */}
+            <div className="p-1 rounded-xl bg-[#E4DCC6]/60 border border-[#14170F]/15 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('tickets')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                  viewMode === 'tickets'
+                    ? 'bg-[#14170F] text-[#F4F1E9] shadow-xs'
+                    : 'text-[#14170F]/70 hover:text-[#14170F]'
+                }`}
+              >
+                <LayoutGrid size={13} />
+                <span>Tickets Grid</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('kanban')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                  viewMode === 'kanban'
+                    ? 'bg-[#14170F] text-[#F4F1E9] shadow-xs'
+                    : 'text-[#14170F]/70 hover:text-[#14170F]'
+                }`}
+              >
+                <Kanban size={13} />
+                <span>Kanban Pipeline</span>
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={() => fetchPickups(true)}
               disabled={refreshing || loading}
-              className="btn-3d-moss px-4 py-2 text-xs font-semibold rounded-xl inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="btn-3d-moss px-3.5 py-2 text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
-              {refreshing ? 'Refreshing...' : 'Refresh'}
+              <span>Refresh</span>
             </button>
 
             <button
               type="button"
               onClick={handleLock}
-              className="btn-3d-copper px-4 py-2 text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
+              className="btn-3d-copper px-3.5 py-2 text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 cursor-pointer"
             >
               <Lock size={13} />
               <span>Lock Terminal</span>
@@ -481,12 +668,12 @@ export default function Admin() {
 
           <div className="card-3d-tactile p-5 bg-[#F4F1E9]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-semibold text-[#2F4E3A]">
+              <span className="text-xs font-mono font-semibold text-[#3B6E8C]">
                 Scheduled
               </span>
-              <AlertCircle size={16} className="text-[#6B8F71]" />
+              <AlertCircle size={16} className="text-[#3B6E8C]" />
             </div>
-            <p className="mt-2 text-2xl font-serif font-bold text-[#2F4E3A]">
+            <p className="mt-2 text-2xl font-serif font-bold text-[#3B6E8C]">
               {metrics.scheduled}
             </p>
           </div>
@@ -518,8 +705,7 @@ export default function Admin() {
         </div>
 
         {/* Filter and Search Bar */}
-        <div className="card-3d-tactile mb-6 flex flex-col gap-4 p-5 bg-[#F4F1E9] md:flex-row md:items-center md:justify-between">
-          {/* Status filter chips */}
+        <div className="card-3d-tactile mb-8 flex flex-col gap-4 p-5 bg-[#F4F1E9] md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             <span className="flex items-center gap-1 text-xs font-mono font-bold opacity-60 mr-1">
               <Filter size={12} /> Status:
@@ -547,7 +733,6 @@ export default function Admin() {
             })}
           </div>
 
-          {/* Search input */}
           <div className="relative w-full md:w-80">
             <Search
               size={15}
@@ -563,36 +748,17 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="mb-6 rounded-xl border border-[#9B4A3E] bg-[#9B4A3E]/10 p-4 text-sm text-[#9B4A3E]">
-            <p className="font-semibold">Failed to load or update collection requests</p>
-            <p className="mt-1 text-xs opacity-80">{error}</p>
-            <button
-              type="button"
-              onClick={() => fetchPickups()}
-              className="btn-3d-copper mt-3 px-3 py-1 text-xs font-semibold rounded-lg"
-            >
-              Try again
-            </button>
-          </div>
-        )}
-
         {/* Loading Skeleton */}
         {loading ? (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {[1, 2, 3, 4].map((n) => (
-              <div
-                key={n}
-                className="card-3d-tactile animate-pulse p-6 bg-[#F4F1E9] space-y-3"
-              >
+              <div key={n} className="card-3d-tactile animate-pulse p-6 bg-[#F4F1E9] space-y-4">
                 <div className="h-6 w-1/3 rounded bg-[#E4DCC6]" />
                 <div className="h-4 w-2/3 rounded bg-[#E4DCC6]" />
               </div>
             ))}
           </div>
         ) : filteredPickups.length === 0 ? (
-          /* Empty State */
           <div className="card-3d-tactile rounded-2xl py-16 text-center bg-[#F4F1E9]">
             <Package size={36} className="mx-auto mb-3 opacity-30 text-[#14170F]" />
             <h3 className="text-lg font-serif font-bold text-[#14170F]">
@@ -603,279 +769,65 @@ export default function Admin() {
                 ? 'Try adjusting your search query or status filter.'
                 : 'No pickup requests have been submitted yet.'}
             </p>
-            {(searchQuery || statusFilter !== 'all') && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setStatusFilter('all');
-                }}
-                className="btn-3d-moss mt-4 px-4 py-2 text-xs font-semibold rounded-xl"
-              >
-                Clear filters
-              </button>
-            )}
+          </div>
+        ) : viewMode === 'tickets' ? (
+          /* ── View 1: Spacious 2-Column Dispatch Tickets Grid ── */
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {filteredPickups.map((item) => (
+              <DispatchTicketCard
+                key={item._id}
+                item={item}
+                onStatusChange={handleStatusChange}
+                isUpdating={updatingId === item._id}
+              />
+            ))}
           </div>
         ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden overflow-hidden rounded-2xl border border-[#14170F]/15 bg-[#F4F1E9] lg:block shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-[#14170F]/15 bg-[#E4DCC6]/40 text-xs font-mono font-bold uppercase tracking-wider text-[#14170F]/70">
-                      <th className="py-3.5 pl-6 pr-4">Tracking ID & Date</th>
-                      <th className="px-4 py-3.5">Campus Location</th>
-                      <th className="px-4 py-3.5">Items & Impact</th>
-                      <th className="px-4 py-3.5">Contact Person</th>
-                      <th className="px-4 py-3.5">Preferred Window</th>
-                      <th className="py-3.5 pl-4 pr-6">Status & Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#14170F]/10">
-                    {filteredPickups.map((item) => {
-                      const isUpdating = updatingId === item._id;
+          /* ── View 2: 3-Column Kanban Board Pipeline ── */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            {(['requested', 'scheduled', 'collected'] as PickupStatus[]).map((colStatus) => {
+              const colConfig = STATUS_DETAILS[colStatus];
+              const colItems = filteredPickups.filter((p) => p.status === colStatus);
+              const ColIcon = colConfig.icon;
 
-                      return (
-                        <tr
-                          key={item._id}
-                          className="transition hover:bg-black/[0.02]"
-                        >
-                          {/* Tracking ID & Date */}
-                          <td className="py-4 pl-6 pr-4 align-top">
-                            <span className="font-mono font-bold tracking-wide text-[#14170F] block">
-                              {item.trackingId}
-                            </span>
-                            <span className="text-xs opacity-60 flex items-center gap-1 mt-1 font-mono">
-                              <Calendar size={11} className="text-[#B5652D]" />
-                              {formatDate(item.createdAt)}
-                            </span>
-                          </td>
-
-                          {/* Campus Location */}
-                          <td className="px-4 py-4 align-top max-w-xs">
-                            <div className="flex items-start gap-1.5">
-                              <MapPin size={14} className="shrink-0 mt-0.5 text-[#B5652D]" />
-                              <span className="text-xs font-medium leading-relaxed text-[#14170F]">
-                                {item.address}
-                              </span>
-                            </div>
-                          </td>
-
-                          {/* Items & Impact */}
-                          <td className="px-4 py-4 align-top max-w-xs">
-                            <div className="flex flex-wrap gap-1 mb-1.5">
-                              {item.categories.map((cat) => (
-                                <span
-                                  key={cat}
-                                  className="rounded-full px-2 py-0.5 text-[11px] font-medium bg-[#2F4E3A]/10 text-[#2F4E3A] border border-[#2F4E3A]/20"
-                                >
-                                  {slugToLabel(cat)}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-mono opacity-70">
-                              <span>{item.quantity}</span>
-                              <span>·</span>
-                              <span className="font-bold text-[#2F4E3A]">
-                                {item.estimatedImpactKg} kg
-                              </span>
-                            </div>
-                          </td>
-
-                          {/* Contact Person */}
-                          <td className="px-4 py-4 align-top">
-                            <div className="space-y-0.5 text-xs text-[#14170F]">
-                              <p className="font-semibold flex items-center gap-1.5">
-                                <User size={12} className="opacity-50 text-[#B5652D]" />
-                                {item.contactName}
-                              </p>
-                              <p className="opacity-70 flex items-center gap-1.5">
-                                <Mail size={12} className="opacity-40" />
-                                <a href={`mailto:${item.contactEmail}`} className="hover:underline">
-                                  {item.contactEmail}
-                                </a>
-                              </p>
-                              <p className="opacity-70 flex items-center gap-1.5">
-                                <Phone size={12} className="opacity-40" />
-                                <a href={`tel:${item.contactPhone}`} className="hover:underline">
-                                  {item.contactPhone}
-                                </a>
-                              </p>
-                            </div>
-                          </td>
-
-                          {/* Preferred Window */}
-                          <td className="px-4 py-4 align-top">
-                            <span className="text-xs font-medium block text-[#14170F]/80">
-                              {item.preferredWindow}
-                            </span>
-                          </td>
-
-                          {/* Status & Actions */}
-                          <td className="py-4 pl-4 pr-6 align-top">
-                            <div className="space-y-2">
-                              <div>
-                                <StatusBadge status={item.status} />
-                              </div>
-
-                              <div className="flex items-center gap-1.5 pt-1">
-                                {item.status !== 'scheduled' && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStatusChange(item._id, item.trackingId, 'scheduled')}
-                                    disabled={isUpdating}
-                                    title="Mark Scheduled"
-                                    className="rounded-lg border border-[#6B8F71]/40 px-2.5 py-1 text-[11px] font-semibold text-[#2F4E3A] bg-[#6B8F71]/15 hover:bg-[#6B8F71]/25 active:scale-95 transition cursor-pointer disabled:opacity-50"
-                                  >
-                                    Schedule
-                                  </button>
-                                )}
-                                {item.status !== 'collected' && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStatusChange(item._id, item.trackingId, 'collected')}
-                                    disabled={isUpdating}
-                                    title="Mark Collected"
-                                    className="btn-3d-moss px-2.5 py-1 text-[11px] font-semibold rounded-lg cursor-pointer disabled:opacity-50"
-                                  >
-                                    Collect
-                                  </button>
-                                )}
-                                {item.status !== 'requested' && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStatusChange(item._id, item.trackingId, 'requested')}
-                                    disabled={isUpdating}
-                                    title="Revert to Requested"
-                                    className="rounded-lg border border-[#14170F]/20 px-2 py-1 text-[11px] font-medium text-[#14170F]/65 hover:bg-[#E4DCC6] active:scale-95 transition cursor-pointer disabled:opacity-50"
-                                  >
-                                    Reset
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="space-y-4 lg:hidden">
-              {filteredPickups.map((item) => {
-                const isUpdating = updatingId === item._id;
-
-                return (
-                  <div
-                    key={item._id}
-                    className="card-3d-tactile p-5 bg-[#F4F1E9]"
-                  >
-                    {/* Top Row: Tracking ID and Status */}
-                    <div className="flex items-start justify-between gap-2 border-b border-[#14170F]/10 pb-3">
-                      <div>
-                        <span className="text-[10px] font-mono uppercase tracking-wider opacity-60 block">Tracking ID</span>
-                        <span className="text-base font-mono font-bold text-[#14170F]">
-                          {item.trackingId}
-                        </span>
-                        <span className="text-xs opacity-60 block mt-0.5 font-mono">{formatDate(item.createdAt)}</span>
-                      </div>
-                      <StatusBadge status={item.status} />
+              return (
+                <div
+                  key={colStatus}
+                  className="rounded-2xl border border-[#14170F]/15 bg-[#E4DCC6]/30 p-4 space-y-4"
+                >
+                  {/* Column Header */}
+                  <div className="flex items-center justify-between pb-2 border-b border-[#14170F]/10">
+                    <div className="flex items-center gap-2">
+                      <ColIcon size={14} className={colConfig.text} />
+                      <h4 className="font-serif font-bold text-sm text-[#14170F]">
+                        {colConfig.label}
+                      </h4>
                     </div>
-
-                    {/* Location */}
-                    <div className="mt-3 flex items-start gap-2">
-                      <MapPin size={15} className="shrink-0 mt-0.5 text-[#B5652D]" />
-                      <div>
-                        <span className="text-xs font-semibold text-[#14170F] block">
-                          {item.address}
-                        </span>
-                        <span className="text-xs opacity-70 block mt-0.5">
-                          Window: {item.preferredWindow}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Items & Impact */}
-                    <div className="mt-3 rounded-xl border border-[#14170F]/10 p-3 bg-[#E4DCC6]/30">
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {item.categories.map((cat) => (
-                          <span
-                            key={cat}
-                            className="rounded-full px-2 py-0.5 text-[11px] font-medium bg-[#2F4E3A]/10 text-[#2F4E3A] border border-[#2F4E3A]/20"
-                          >
-                            {slugToLabel(cat)}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="opacity-70">{item.quantity}</span>
-                        <span className="font-bold text-[#2F4E3A]">
-                          {item.estimatedImpactKg} kg diverted
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Contact Person */}
-                    <div className="mt-3 space-y-1 text-xs text-[#14170F]">
-                      <p className="font-semibold flex items-center gap-1.5">
-                        <User size={12} className="opacity-50 text-[#B5652D]" />
-                        {item.contactName}
-                      </p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 opacity-75">
-                        <a href={`mailto:${item.contactEmail}`} className="flex items-center gap-1 hover:underline">
-                          <Mail size={11} /> {item.contactEmail}
-                        </a>
-                        <a href={`tel:${item.contactPhone}`} className="flex items-center gap-1 hover:underline">
-                          <Phone size={11} /> {item.contactPhone}
-                        </a>
-                      </div>
-                    </div>
-
-                    {/* Action buttons on mobile */}
-                    <div className="mt-4 pt-3 border-t border-[#14170F]/10 flex items-center gap-2">
-                      <span className="text-xs font-mono opacity-50 mr-1 flex items-center gap-0.5">
-                        <ArrowRight size={12} /> Set:
-                      </span>
-                      {item.status !== 'scheduled' && (
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(item._id, item.trackingId, 'scheduled')}
-                          disabled={isUpdating}
-                          className="flex-1 rounded-xl border border-[#6B8F71]/40 py-2 text-xs font-semibold text-[#2F4E3A] bg-[#6B8F71]/15 active:scale-95 transition"
-                        >
-                          Schedule
-                        </button>
-                      )}
-                      {item.status !== 'collected' && (
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(item._id, item.trackingId, 'collected')}
-                          disabled={isUpdating}
-                          className="flex-1 btn-3d-moss py-2 text-xs font-semibold rounded-xl text-center"
-                        >
-                          Collect
-                        </button>
-                      )}
-                      {item.status !== 'requested' && (
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(item._id, item.trackingId, 'requested')}
-                          disabled={isUpdating}
-                          className="rounded-xl border border-[#14170F]/20 px-3 py-2 text-xs font-medium text-[#14170F]/70 hover:bg-[#E4DCC6]"
-                        >
-                          Reset
-                        </button>
-                      )}
-                    </div>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#14170F]/10 text-[#14170F]">
+                      {colItems.length}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          </>
+
+                  {/* Column Cards */}
+                  <div className="space-y-4">
+                    {colItems.map((item) => (
+                      <DispatchTicketCard
+                        key={item._id}
+                        item={item}
+                        onStatusChange={handleStatusChange}
+                        isUpdating={updatingId === item._id}
+                      />
+                    ))}
+                    {colItems.length === 0 && (
+                      <div className="py-8 text-center text-xs font-mono text-[#14170F]/40 border-2 border-dashed border-[#14170F]/10 rounded-xl">
+                        No requests in {colConfig.label}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </main>

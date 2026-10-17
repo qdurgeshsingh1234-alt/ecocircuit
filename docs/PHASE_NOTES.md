@@ -102,6 +102,23 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Built client production bundle with `npm --prefix client run build` confirming 0 TypeScript errors; verified with Playwright at 1440px desktop and 375px mobile viewports; verified interactive PIN gate unlocking with code `2026` and immediate relocking via "Lock Terminal"; confirmed `/` scroll-canvas frame animation remains 100% intact; and captured authentic screenshots saved to `docs/screenshots/`.
 5. **Remaining limitations:** PIN `2026` is a client-validated demonstration credential designed for evaluator accessibility and automated tests; real-world deployment would link with LPU single sign-on (SSO) or institutional LDAP.
 
+---
+
+## Stage K: Argon Overdrive UI/UX Redesign — Cursor Spotlight, Hover-Reveal Color-Coded Tiles, Sticky Zero-Scrollbar Centers & Admin Dispatch Board
+
+1. **What it does:** Solves layout and visual clutter by introducing sleek custom scrollbars, a cursor-tracking ambient spotlight background, color-coded item and hazard cards with hover-reveal drawers, an interactive 3D Device X-Ray Spec Modal, a scrollbar-free natural page flow for `/centers` with a sticky map, and a dual-mode Hostel Collection Dispatch Board (`Tickets Grid` vs `Kanban Pipeline`) on `/admin`.
+2. **How it works:**
+   - Adds custom sleek scrollbars (`::-webkit-scrollbar` with dark `#14170F` tracks and Moss-to-Copper thumb gradients) and high-contrast color tokens in `client/src/index.css`.
+   - Implements global interactive cursor spotlight tracking via `mousemove` in `client/src/App.tsx` updating CSS variables `--mouse-x` and `--mouse-y` for `.interactive-spotlight-bg`.
+   - Upgrades `client/src/components/Nav.tsx` to an island floating dock (`fixed top-3 inset-x-0 z-50 pointer-events-none`, inner dock `max-w-[1380px] bg-[#14170F]/95 backdrop-blur-xl border border-[#F4F1E9]/15 shadow-2xl pointer-events-auto`) with glowing emerald active pill and zero gray background bleed.
+   - Redesigns `client/src/pages/Guide.tsx` with 4 color-coded surface themes (`.theme-card-hazard`, `.theme-card-emerald`, `.theme-card-copper`, `.theme-card-slate`), hover-reveal drawer panels (`group-hover:translate-y-0`), interactive 3D Device X-Ray Spec Modal with interactive preparation checklists, and a compact 3-pill Golden Rules ribbon with hover tooltips.
+   - Overhauls `client/src/pages/Centers.tsx` by removing the nested inner scrollbar on the left column (flows naturally with window scroll), keeping the right column sticky (`sticky top-24 h-[calc(100vh-7.5rem)]`), and adding live `● OPEN NOW` emerald pulse badges.
+   - Upgrades `client/src/pages/Admin.tsx` with a Tactile Dispatch Board supporting instant toggling between `Tickets Grid` and `Kanban Pipeline` views, color-coded status banners, monospace tracking badges (`ECO-XXXXXX`), student contact chips, and 3-step pipeline action buttons, while preserving the 3D Hardware PIN Gate (`2026`).
+3. **Important files:** `client/src/index.css` (custom scrollbars, cursor spotlight, color-coded card themes), `client/src/App.tsx` (cursor mousemove tracker), `client/src/components/Nav.tsx` (floating dock navbar), `client/src/pages/Guide.tsx` (hover-reveal cards, 3D spec modal, golden rules ribbon), `client/src/pages/Centers.tsx` (scrollbar-free left column, sticky map), `client/src/pages/Admin.tsx` (dispatch board with Tickets Grid & Kanban Pipeline).
+4. **How it was tested:** Built client production bundle with `npm --prefix client run build` with 0 errors; launched Playwright to verify clean visual rendering across `/guide`, `/centers`, `/admin`, and `/` at 1440px desktop; tested interactive modal checklist, Quick Unlock PIN gate, and Kanban view switching; confirmed zero console errors; verified whole-repository BOM and zero-byte cleanliness; and captured full-resolution screenshots in `docs/screenshots/stage_k_*.png`.
+5. **Remaining limitations:** Live production routing, physical electronic weighing scales, and SMS OTP authentication gateways are simulated for prototype evaluation purposes.
+
+
 
 
 
