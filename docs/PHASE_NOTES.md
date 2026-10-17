@@ -32,3 +32,14 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Deleted orphaned `ewasteCategories.ts`, verified exact string matching for all 7 slugs, and ran automated whole-word regex scans confirming 0 matches for Delhi, NCR, or doorstep.
 5. **Remaining limitations:** Center records are hardcoded sample prototypes for academic evaluation and do not represent active commercial logistics contracts.
 
+---
+
+## Stage D: Disposal & Verification Guide (`/guide`)
+
+1. **What it does:** Provides an instant searchable catalog of 36 campus items, a 7-step pre-disposal checklist, battery safety protocols, and deep links to campus collection points and hostel pickups.
+2. **How it works:** Replaces gimmick 3D tilt and specular glare animations with tactile editorial cards adhering strictly to the "circuit meets soil" palette (`#14170F`, `#F4F1E9`, `#2F4E3A`, `#B5652D`, `#E4DCC6`, `#6B8F71`, `#9B4A3E`); live query filters match item names and aliases with deep links carrying category slugs.
+3. **Important files:** `client/src/pages/Guide.tsx` (guide lookup engine, editorial card layout, sticky pre-disposal checklist, battery protocol), `client/src/data/guideItems.ts` (36 catalog items with disposal protocols).
+4. **How it was tested:** Executed live browser evaluation testing keyword search ("phone"), filter chips, and deep link generation (`/centers?category=mobiles-accessories` and `/pickup?category=mobiles-accessories`); captured desktop 1440px and mobile 375px screenshots; confirmed 0 console errors and 0 BOM files.
+5. **Remaining limitations:** The pre-disposal checklist status is stored locally in React component state rather than saved persistently across user sessions.
+
+

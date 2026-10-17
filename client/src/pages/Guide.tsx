@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -83,47 +83,10 @@ const VERDICT_STYLES: Record<
   },
 };
 
-// ── 3D Interactive Tilting Card Component ─────────────────────────────────────
+// ── Editorial Item Card Component ─────────────────────────────────────
 function ItemCard({ item }: { item: GuideItem }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-  const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-
   const style = VERDICT_STYLES[item.verdict];
   const VerdictIcon = style.icon;
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rX = ((y - centerY) / centerY) * -6.5;
-    const rY = ((x - centerX) / centerX) * 6.5;
-
-    setRotateX(rX);
-    setRotateY(rY);
-    setGlare({
-      x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100,
-      opacity: 0.18,
-    });
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
-    setIsHovered(false);
-    setGlare((prev) => ({ ...prev, opacity: 0 }));
-  };
 
   return (
     <motion.div
@@ -132,37 +95,15 @@ function ItemCard({ item }: { item: GuideItem }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-      style={{ perspective: 1000 }}
       className="h-full"
     >
       <div
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
         style={{
-          transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${isHovered ? 12 : 0}px)`,
-          transition: isHovered
-            ? 'transform 0.08s ease-out, box-shadow 0.2s ease'
-            : 'transform 0.5s ease-out, box-shadow 0.3s ease',
-          transformStyle: 'preserve-3d',
-          boxShadow: isHovered
-            ? '0 20px 35px -10px rgba(20, 23, 15, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.6)'
-            : '0 4px 14px -3px rgba(20, 23, 15, 0.04)',
           background: 'var(--paper)',
           borderColor: style.border,
         }}
-        className="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border transition-all"
+        className="relative flex h-full flex-col justify-between overflow-hidden rounded-xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
       >
-        {/* Dynamic Specular Glare overlay */}
-        <div
-          className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-300"
-          style={{
-            opacity: glare.opacity,
-            background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, 0.7) 0%, transparent 65%)`,
-          }}
-        />
-
         {/* Card Content Top */}
         <div>
           {/* Header Verdict Ribbon */}
@@ -453,12 +394,7 @@ function StickyChecklistCard() {
 
   return (
     <div
-      className="lg:sticky lg:top-24 rounded-3xl border p-6 shadow-2xl backdrop-blur-xl space-y-5"
-      style={{
-        background: 'linear-gradient(165deg, color-mix(in srgb, var(--moss) 12%, var(--paper)) 0%, color-mix(in srgb, var(--sand) 40%, var(--paper)) 100%)',
-        borderColor: 'color-mix(in srgb, var(--moss) 30%, transparent)',
-        boxShadow: '0 20px 45px -15px rgba(47, 78, 58, 0.12)',
-      }}
+      className="lg:sticky lg:top-24 rounded-xl border border-[var(--sand)] bg-[var(--paper)] p-6 shadow-sm space-y-5"
     >
       {/* Header */}
       <div>
@@ -509,9 +445,9 @@ function StickyChecklistCard() {
               className="cursor-pointer rounded-xl border p-3 transition-all select-none"
               style={{
                 background: isDone
-                  ? 'color-mix(in srgb, var(--moss) 14%, var(--paper))'
-                  : 'rgba(255, 255, 255, 0.65)',
-                borderColor: isDone ? 'var(--moss)' : 'color-mix(in srgb, var(--sand) 80%, transparent)',
+                  ? 'color-mix(in srgb, var(--moss) 12%, var(--paper))'
+                  : 'color-mix(in srgb, var(--sand) 25%, var(--paper))',
+                borderColor: isDone ? 'var(--moss)' : 'var(--sand)',
               }}
             >
               <div className="flex items-start gap-2.5">
