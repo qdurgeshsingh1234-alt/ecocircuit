@@ -42,4 +42,15 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Executed live browser evaluation testing keyword search ("phone"), filter chips, and deep link generation (`/centers?category=mobiles-accessories` and `/pickup?category=mobiles-accessories`); captured desktop 1440px and mobile 375px screenshots; confirmed 0 console errors and 0 BOM files.
 5. **Remaining limitations:** The pre-disposal checklist status is stored locally in React component state rather than saved persistently across user sessions.
 
+---
+
+## Stage E: Collection Centers & Interactive Campus Map (`/centers`)
+
+1. **What it does:** Shows verified campus drop-off bins and regional e-waste recyclers near Lovely Professional University on an interactive OpenStreetMap with category filtering and distance sorting.
+2. **How it works:** Uses Leaflet with brand-colored DivIcon SVGs (`#2F4E3A`, `#B5652D`, `#14170F`) without PNG asset dependencies; synchronizes state bidirectionally between markers and list cards; filters by category via URL query parameters (`?category=`); calculates distance from LPU campus center (`31.255° N, 75.705° E`); and generates Google Maps directions links.
+3. **Important files:** `client/src/pages/Centers.tsx` (bidirectional map and list layout, Haversine distance calculator, Leaflet controller, and filter system), `server/src/routes/centers.ts` (backend query API).
+4. **How it was tested:** Navigated to `/centers?category=batteries`, verified that 7 battery collection points rendered with exact distance sorting, validated Google Maps routing URLs and OSM attribution, and captured 1440px desktop and 375px mobile screenshots without console errors.
+5. **Remaining limitations:** Live GPS geolocation requires HTTPS/browser user permission; by default, distance calculation centers on LPU campus center coordinates.
+
+
 

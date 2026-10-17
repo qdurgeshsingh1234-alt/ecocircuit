@@ -442,7 +442,7 @@ export default function Centers() {
 
           {/* ── MAP COLUMN: Order 1 on mobile, Order 2 on desktop ────────── */}
           <div className="order-1 lg:order-2 col-span-1 lg:col-span-5 xl:col-span-5">
-            <div className="lg:sticky lg:top-28 rounded-2xl border border-[var(--sand)] bg-[var(--paper)] shadow-md overflow-hidden flex flex-col h-[340px] sm:h-[400px] lg:h-[calc(100vh-8.5rem)] lg:min-h-[580px]">
+            <div className="lg:sticky lg:top-28 rounded-xl border border-[var(--sand)] bg-[var(--paper)] overflow-hidden flex flex-col h-[340px] sm:h-[400px] lg:h-[calc(100vh-8.5rem)] lg:min-h-[580px]">
 
               {/* Map Header Toolbar */}
               <div className="px-4 sm:px-5 py-3 bg-[var(--sand)]/50 border-b border-[var(--sand)] flex items-center justify-between shrink-0">
@@ -569,8 +569,8 @@ export default function Centers() {
             </div>
           </div>
 
-          {/* ── LIST COLUMN: Wide, scrollable, floating glass container (backdrop-blur-xl bg-paper/90 shadow-2xl) ── */}
-          <div className="order-2 lg:order-1 col-span-1 lg:col-span-7 xl:col-span-7 rounded-3xl border border-[var(--sand)] backdrop-blur-xl bg-[color-mix(in_srgb,var(--paper)_92%,transparent)] shadow-2xl p-4 sm:p-6 lg:max-h-[calc(100vh-8.5rem)] lg:min-h-[580px] lg:overflow-y-auto space-y-4">
+          {/* ── LIST COLUMN: Clean tactile cards column ── */}
+          <div className="order-2 lg:order-1 col-span-1 lg:col-span-7 xl:col-span-7 rounded-xl border border-[var(--sand)] bg-[var(--paper)] p-4 sm:p-6 lg:max-h-[calc(100vh-8.5rem)] lg:min-h-[580px] lg:overflow-y-auto space-y-4">
 
             {/* Result count & active filter summary */}
             <div className="flex items-center justify-between px-1 pb-1 border-b border-[var(--sand)]/60">
@@ -597,7 +597,7 @@ export default function Centers() {
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="p-6 rounded-2xl border border-[var(--sand)] bg-white/70 animate-pulse space-y-4"
+                    className="p-5 rounded-xl border border-[var(--sand)] bg-[var(--sand)]/30 animate-pulse space-y-4"
                   >
                     <div className="flex gap-2">
                       <div className="h-5 w-24 bg-[var(--sand)] rounded-md" />
@@ -613,7 +613,7 @@ export default function Centers() {
 
             {/* Error state */}
             {!loading && error && (
-              <div className="p-8 rounded-2xl border border-[var(--rust)]/30 bg-[var(--rust)]/5 text-center space-y-3">
+              <div className="p-8 rounded-xl border border-[var(--rust)]/30 bg-[var(--rust)]/5 text-center space-y-3">
                 <AlertCircle size={36} className="mx-auto text-[var(--rust)] opacity-80" />
                 <h3 className="text-base text-[var(--ink)] font-semibold">Unable to load centers</h3>
                 <p className="text-xs text-[var(--ink)]/60 max-w-md mx-auto">{error}</p>
@@ -628,7 +628,7 @@ export default function Centers() {
 
             {/* Empty state */}
             {!loading && !error && filteredCenters.length === 0 && (
-              <div className="p-12 rounded-2xl border border-[var(--sand)] bg-white/50 text-center space-y-4">
+              <div className="p-12 rounded-xl border border-[var(--sand)] bg-[var(--paper)] text-center space-y-4">
                 <Compass size={40} className="mx-auto text-[var(--ink)]/30" />
                 <h3 className="text-base font-semibold text-[var(--ink)]" style={{ fontFamily: 'var(--font-heading)' }}>
                   No drop-off points found
@@ -658,10 +658,10 @@ export default function Centers() {
                       key={center._id}
                       id={`center-card-${center._id}`}
                       onClick={() => handleSelectFromList(center)}
-                      className={`group p-5 rounded-2xl border transition-all duration-200 cursor-pointer ${
+                      className={`group p-5 rounded-xl border transition-all duration-200 cursor-pointer ${
                         isSelected
-                          ? 'border-[var(--moss)] bg-white shadow-xl ring-2 ring-[var(--moss)]/30 scale-[1.01]'
-                          : 'border-[var(--sand)]/80 bg-white/90 hover:bg-white hover:border-[var(--moss)]/50 hover:shadow-md'
+                          ? 'border-[var(--moss)] bg-[color-mix(in_srgb,var(--sand)_40%,var(--paper))] shadow-md ring-1 ring-[var(--moss)]'
+                          : 'border-[var(--sand)] bg-[var(--paper)] hover:bg-[color-mix(in_srgb,var(--sand)_25%,var(--paper))] hover:border-[var(--moss)]/50 hover:shadow-xs'
                       }`}
                     >
                       {/* Top badge row: Type, Sample data, Distance */}
@@ -753,7 +753,7 @@ export default function Centers() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white text-[var(--ink)] hover:bg-[var(--sand)]/40 border border-[var(--sand)] transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--sand)]/50 border border-[var(--sand)] transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                         >
                           <ExternalLink size={13} /> Get directions
                         </a>
