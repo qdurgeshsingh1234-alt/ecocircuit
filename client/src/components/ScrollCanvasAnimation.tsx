@@ -247,6 +247,11 @@ export default function ScrollCanvasAnimation({
         }}
       />
 
+      {/* Cinematic Vignettes to eliminate harsh left/right/bottom canvas seams */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#14170F] to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#14170F] to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#14170F] to-transparent z-10" />
+
       {/* ── Story overlay ── */}
       <AnimatePresence mode="wait">
         {showStoryOverlay && (
@@ -256,37 +261,39 @@ export default function ScrollCanvasAnimation({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute z-20 pointer-events-none left-4 right-4 bottom-6 md:left-auto md:right-12 md:bottom-20 md:max-w-xs rounded-xl p-4 md:p-5 border border-[var(--sand)]/20 bg-[var(--ink)]/92 shadow-2xl"
+            className="absolute z-20 pointer-events-none left-4 right-4 bottom-6 md:left-auto md:right-12 md:bottom-20 md:max-w-sm rounded-2xl p-5 md:p-6 bg-[#14170F]/85 backdrop-blur-xl border border-[#B5652D]/45 shadow-[0_12px_32px_rgba(0,0,0,0.5)]"
           >
             {/* Tag pill */}
             <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.25rem 0.65rem',
+                gap: '0.5rem',
+                padding: '0.25rem 0.75rem',
                 borderRadius: '9999px',
                 border: `1px solid ${beat.accent}`,
-                background: 'rgba(20, 23, 15, 0.6)',
-                marginBottom: '0.5rem',
+                background: 'rgba(20, 23, 15, 0.7)',
+                marginBottom: '0.75rem',
               }}
             >
               <span
                 style={{
-                  width: 5,
-                  height: 5,
+                  width: 7,
+                  height: 7,
                   borderRadius: '50%',
                   backgroundColor: beat.accent,
+                  boxShadow: `0 0 10px ${beat.accent}`,
                 }}
+                className="animate-pulse"
               />
               <span
                 style={{
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.1em',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
                   textTransform: 'uppercase',
                   color: beat.accent,
-                  fontFamily: 'var(--font-body)',
+                  fontFamily: 'var(--font-mono, monospace)',
                 }}
               >
                 {beat.tag}
@@ -297,11 +304,11 @@ export default function ScrollCanvasAnimation({
             <h3
               style={{
                 fontFamily: 'var(--font-heading)',
-                fontSize: 'clamp(1rem, 2vw, 1.25rem)',
-                fontWeight: 500,
-                lineHeight: 1.25,
+                fontSize: 'clamp(1.05rem, 2vw, 1.3rem)',
+                fontWeight: 600,
+                lineHeight: 1.3,
                 color: 'var(--paper)',
-                marginBottom: '0.4rem',
+                marginBottom: '0.5rem',
               }}
             >
               {beat.headline}
@@ -310,9 +317,9 @@ export default function ScrollCanvasAnimation({
             {/* Sub */}
             <p
               style={{
-                fontSize: '0.75rem',
+                fontSize: '0.8rem',
                 lineHeight: 1.6,
-                color: 'rgba(244, 241, 233, 0.75)',
+                color: 'rgba(244, 241, 233, 0.85)',
               }}
             >
               {beat.sub}
@@ -321,9 +328,9 @@ export default function ScrollCanvasAnimation({
             {/* Progress bar for this beat */}
             <div
               style={{
-                marginTop: '0.75rem',
-                height: 2,
-                borderRadius: 2,
+                marginTop: '0.85rem',
+                height: 3,
+                borderRadius: 3,
                 background: 'rgba(244, 241, 233, 0.15)',
                 overflow: 'hidden',
               }}
@@ -332,7 +339,7 @@ export default function ScrollCanvasAnimation({
                 style={{
                   height: '100%',
                   backgroundColor: beat.accent,
-                  borderRadius: 2,
+                  borderRadius: 3,
                   width: `${Math.min(
                     100,
                     Math.max(0, ((progress - beat.from) / (beat.to - beat.from)) * 100)

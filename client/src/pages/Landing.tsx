@@ -5,10 +5,11 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, MapPin, Calendar, BookOpen, ChevronDown, Recycle, Shield, TrendingUp } from 'lucide-react';
 import { Button } from '../components/Button';
-import { SectionHeading, Reveal, Card3D } from '../components/ui';
+import { SectionHeading, Reveal } from '../components/ui';
 import StatCounter from '../components/StatCounter';
 import HowItWorksTimeline from '../components/HowItWorksTimeline';
 import ScrollCanvasAnimation from '../components/ScrollCanvasAnimation';
+import { Waves } from '../components/ui/wave-background';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -74,9 +75,9 @@ const stats = [
 ];
 
 const actionCards = [
-  { icon: BookOpen, color: 'var(--signal)', eyebrow: 'Learn', title: 'What counts as e-waste?', body: 'Check whether your item is e-waste, what hazards it contains, and what to do before handing it in.', cta: 'Read the Guide', to: '/guide' },
-  { icon: MapPin, color: 'var(--copper)', eyebrow: 'Locate', title: 'Find a collection point', body: 'Campus drop-off points near hostels and academic blocks, plus authorized recyclers in the Phagwara–Jalandhar area.', cta: 'Open the Map', to: '/centers' },
-  { icon: Calendar, color: 'var(--moss)', eyebrow: 'Collect', title: 'Request a hostel or department collection', body: "Can't reach a drop-off? Request a collection for your hostel block or department — a collector visits on scheduled days.", cta: 'Request Collection', to: '/pickup' },
+  { icon: BookOpen, color: 'var(--signal)', theme: 'theme-card-slate', eyebrow: 'Learn', title: 'What counts as e-waste?', body: 'Check whether your item is e-waste, what hazards it contains, and what to do before handing it in.', cta: 'Read the Guide', to: '/guide' },
+  { icon: MapPin, color: 'var(--copper)', theme: 'theme-card-copper', eyebrow: 'Locate', title: 'Find a collection point', body: 'Campus drop-off points near hostels and academic blocks, plus authorized recyclers in the Phagwara–Jalandhar area.', cta: 'Open the Map', to: '/centers' },
+  { icon: Calendar, color: 'var(--moss)', theme: 'theme-card-emerald', eyebrow: 'Collect', title: 'Request a hostel or department collection', body: "Can't reach a drop-off? Request a collection for your hostel block or department — a collector visits on scheduled days.", cta: 'Request Collection', to: '/pickup' },
 ];
 
 const trustBadges = [
@@ -121,6 +122,13 @@ export default function Landing() {
             overflow: 'hidden',
           }}
         >
+          {/* Waves living topographic ripple in hero background */}
+          <Waves
+            className="absolute inset-0 z-0 opacity-45 pointer-events-none"
+            strokeColor="rgba(181, 101, 45, 0.22)"
+            variant="dark"
+          />
+
           {/* Canvas scroll animation — fills full sticky viewport */}
           <ScrollCanvasAnimation sectionRef={heroRef as React.RefObject<HTMLElement>} />
 
@@ -247,18 +255,18 @@ export default function Landing() {
               const Icon = card.icon;
               return (
                 <Reveal key={card.to} delay={i * 0.12}>
-                  <Link to={card.to} className="block h-full">
-                    <Card3D className="h-full p-8" style={{ backgroundColor: 'var(--sand)', borderColor: 'var(--sand)' } as React.CSSProperties}>
+                  <Link to={card.to} className="block h-full group">
+                    <div className={`h-full p-8 rounded-2xl border transition-all duration-300 card-3d-tactile ${card.theme}`}>
                       <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: card.color + '18', color: card.color, marginBottom: '1.25rem' }}>
                         <Icon size={22} />
                       </div>
-                      <p style={{ fontSize: '0.7rem', fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: card.color, marginBottom: '0.5rem', fontFamily: 'var(--font-body)' }}>{card.eyebrow}</p>
-                      <h3 style={{ color: 'var(--ink)', marginBottom: '0.5rem' }}>{card.title}</h3>
-                      <p style={{ fontSize: '0.875rem', color: 'color-mix(in srgb, var(--ink) 60%, transparent)', lineHeight: 1.7, marginBottom: '1.25rem' }}>{card.body}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: card.color }}>
-                        {card.cta} <ArrowRight size={14} />
+                      <p style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: card.color, marginBottom: '0.5rem', fontFamily: 'var(--font-mono, monospace)' }}>{card.eyebrow}</p>
+                      <h3 style={{ color: 'var(--ink)', marginBottom: '0.5rem', fontFamily: 'var(--font-heading)' }} className="text-xl font-bold">{card.title}</h3>
+                      <p style={{ fontSize: '0.875rem', color: 'color-mix(in srgb, var(--ink) 70%, transparent)', lineHeight: 1.7, marginBottom: '1.25rem' }}>{card.body}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: card.color }}>
+                        {card.cta} <ArrowRight size={14} className="group-hover:translate-x-1.5 transition-transform" />
                       </div>
-                    </Card3D>
+                    </div>
                   </Link>
                 </Reveal>
               );

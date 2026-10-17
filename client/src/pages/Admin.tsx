@@ -10,8 +10,6 @@ import {
   MapPin,
   Calendar,
   User,
-  Phone,
-  Mail,
   Leaf,
   Layers,
   Filter,
@@ -20,7 +18,6 @@ import {
   Lock,
   LayoutGrid,
   Kanban,
-  Check,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -249,8 +246,8 @@ function AdminPinGate({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
-// ─── Tactile Dispatch Ticket Card Component ───────────────────────────────────
-function DispatchTicketCard({
+// ─── Sleek Full-Width Command Strip (12-Column Internal Grid) ─────────────────
+function DispatchCommandStrip({
   item,
   onStatusChange,
   isUpdating,
@@ -259,145 +256,173 @@ function DispatchTicketCard({
   onStatusChange: (id: string, trackingId: string, status: PickupStatus) => void;
   isUpdating: boolean;
 }) {
-  const config = STATUS_DETAILS[item.status];
-  const StatusIcon = config.icon;
+  const borderStatusClass =
+    item.status === 'requested'
+      ? 'border-l-[#B5652D]'
+      : item.status === 'scheduled'
+      ? 'border-l-[#3B6E8C]'
+      : 'border-l-[#2F4E3A]';
 
   return (
-    <div className="card-3d-tactile overflow-hidden bg-[#F4F1E9] flex flex-col justify-between">
-      {/* ── Top Status Banner Strip ── */}
-      <div className={`px-5 py-3 border-b ${config.bannerBg} ${config.bannerBorder} flex items-center justify-between`}>
-        <div className="flex items-center gap-2.5">
-          <span className="font-mono text-sm font-bold text-[#14170F] bg-[#14170F]/8 px-2.5 py-1 rounded-md border border-[#14170F]/10">
-            {item.trackingId}
-          </span>
-          <span className="text-xs font-mono text-[#14170F]/60 flex items-center gap-1">
+    <div
+      className={`w-full rounded-2xl p-5 sm:p-6 transition-all duration-200 border border-[#14170F]/12 border-l-4 ${borderStatusClass} card-3d-tactile bg-[#F4F1E9]`}
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+        {/* Cols 1–3: Tracking ID + Mass + Date */}
+        <div className="lg:col-span-3 space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-lg font-mono font-bold text-[#14170F] tracking-tight">
+              #{item.trackingId}
+            </span>
+            <span className="font-mono text-xs font-bold text-[#2F4E3A] bg-[#2F4E3A]/10 px-2.5 py-0.5 rounded-full border border-[#2F4E3A]/25">
+              ⚡ {item.estimatedImpactKg} kg
+            </span>
+          </div>
+          <p className="text-xs font-mono text-[#14170F]/60 flex items-center gap-1">
             <Calendar size={12} className="text-[#B5652D]" />
-            {formatDate(item.createdAt)}
-          </span>
+            <span>{formatDate(item.createdAt)}</span>
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-bold text-[#2F4E3A] bg-[#2F4E3A]/10 px-2.5 py-1 rounded-md border border-[#2F4E3A]/20">
-            ⚡ {item.estimatedImpactKg} kg
-          </span>
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono ${config.badgeBg} ${config.text}`}>
-            <StatusIcon size={12} />
-            {config.label}
-          </span>
-        </div>
-      </div>
-
-      {/* ── Body Grid (2 Clean Columns) ── */}
-      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Left Column: Location & Window */}
-        <div className="space-y-2">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#14170F]/50 block">
-            Hostel / Pickup Point:
-          </span>
-          <div className="flex items-start gap-2">
+        {/* Cols 4–6: Campus Pickup Location & Window */}
+        <div className="lg:col-span-3 space-y-1">
+          <div className="flex items-start gap-1.5">
             <MapPin size={16} className="text-[#B5652D] shrink-0 mt-0.5" />
-            <span className="text-sm font-semibold text-[#14170F] leading-snug">
+            <span className="text-sm sm:text-base font-serif font-bold text-[#14170F] leading-snug">
               {item.address}
             </span>
           </div>
-          <div className="pt-1">
-            <span className="inline-block text-xs font-medium text-[#14170F]/80 bg-[#E4DCC6]/60 px-2.5 py-1 rounded-lg border border-[#14170F]/10">
-              🕒 Window: <strong>{item.preferredWindow}</strong>
-            </span>
-          </div>
+          <p className="text-xs text-[#14170F]/70 font-mono">
+            🕒 {item.preferredWindow}
+          </p>
         </div>
 
-        {/* Right Column: Contact & Categories */}
-        <div className="space-y-2">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#14170F]/50 block">
-            Student Contact:
-          </span>
-          <div className="text-xs space-y-1">
-            <p className="font-bold text-sm text-[#14170F] flex items-center gap-1.5">
-              <User size={13} className="text-[#2F4E3A]" />
-              {item.contactName}
-            </p>
-            <div className="flex flex-wrap gap-2 text-xs font-mono pt-0.5">
-              <a
-                href={`mailto:${item.contactEmail}`}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#14170F]/5 hover:bg-[#14170F]/10 text-[#14170F]"
-              >
-                <Mail size={11} className="text-[#B5652D]" />
-                {item.contactEmail}
-              </a>
-              <a
-                href={`tel:${item.contactPhone}`}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#14170F]/5 hover:bg-[#14170F]/10 text-[#14170F]"
-              >
-                <Phone size={11} className="text-[#2F4E3A]" />
-                {item.contactPhone}
-              </a>
-            </div>
+        {/* Cols 7–9: Student & Categories */}
+        <div className="lg:col-span-3 space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <User size={14} className="text-[#2F4E3A] shrink-0" />
+            <span className="text-sm font-bold text-[#14170F]">{item.contactName}</span>
           </div>
-
-          <div className="pt-1 flex flex-wrap gap-1">
+          <p className="text-xs font-mono text-[#14170F]/70 truncate">
+            {item.contactEmail} • {item.contactPhone}
+          </p>
+          <div className="flex flex-wrap gap-1 pt-0.5">
             {item.categories.map((cat) => (
               <span
                 key={cat}
-                className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#2F4E3A]/10 text-[#2F4E3A] border border-[#2F4E3A]/20"
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#14170F]/6 text-[#14170F]/80 border border-[#14170F]/10 font-mono"
               >
                 {slugToLabel(cat)}
               </span>
             ))}
           </div>
         </div>
-      </div>
 
-      {/* ── Bottom Interactive 3-Step Pipeline Bar ── */}
-      <div className="p-4 bg-[#E4DCC6]/25 border-t border-[#14170F]/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Visual Progress Track */}
-        <div className="flex items-center gap-2 text-xs font-mono">
-          <span className={`px-2 py-0.5 rounded font-bold ${item.status === 'requested' ? 'bg-[#B5652D] text-white' : 'bg-[#14170F]/10 text-[#14170F]'}`}>
-            1. Req
-          </span>
-          <span className="text-[#14170F]/30">━</span>
-          <span className={`px-2 py-0.5 rounded font-bold ${item.status === 'scheduled' ? 'bg-[#3B6E8C] text-white' : 'bg-[#14170F]/10 text-[#14170F]'}`}>
-            2. Sched
-          </span>
-          <span className="text-[#14170F]/30">━</span>
-          <span className={`px-2 py-0.5 rounded font-bold ${item.status === 'collected' ? 'bg-[#2F4E3A] text-white' : 'bg-[#14170F]/10 text-[#14170F]'}`}>
-            3. Done
-          </span>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 ml-auto">
-          {item.status !== 'scheduled' && (
+        {/* Cols 10–12: 3-Way Segmented Control Dock */}
+        <div className="lg:col-span-3 flex justify-start lg:justify-end">
+          <div className="bg-[#14170F]/8 p-1 rounded-xl inline-flex items-center gap-1 border border-[#14170F]/15">
             <button
               type="button"
-              onClick={() => onStatusChange(item._id, item.trackingId, 'scheduled')}
               disabled={isUpdating}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold border border-[#3B6E8C]/40 text-[#3B6E8C] bg-[#3B6E8C]/10 hover:bg-[#3B6E8C]/20 transition cursor-pointer disabled:opacity-50"
-            >
-              Schedule Pickup →
-            </button>
-          )}
-          {item.status !== 'collected' && (
-            <button
-              type="button"
-              onClick={() => onStatusChange(item._id, item.trackingId, 'collected')}
-              disabled={isUpdating}
-              className="btn-3d-moss px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
-            >
-              <Check size={12} /> Mark Collected
-            </button>
-          )}
-          {item.status !== 'requested' && (
-            <button
-              type="button"
               onClick={() => onStatusChange(item._id, item.trackingId, 'requested')}
-              disabled={isUpdating}
-              className="px-2.5 py-1.5 rounded-xl text-xs font-medium border border-[#14170F]/20 text-[#14170F]/70 hover:bg-[#E4DCC6] transition cursor-pointer disabled:opacity-50"
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                item.status === 'requested'
+                  ? 'bg-[#B5652D] text-white shadow-xs'
+                  : 'text-[#14170F]/60 hover:text-[#14170F]'
+              }`}
             >
-              Reset
+              Requested
             </button>
-          )}
+            <button
+              type="button"
+              disabled={isUpdating}
+              onClick={() => onStatusChange(item._id, item.trackingId, 'scheduled')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                item.status === 'scheduled'
+                  ? 'bg-[#3B6E8C] text-white shadow-xs'
+                  : 'text-[#14170F]/60 hover:text-[#14170F]'
+              }`}
+            >
+              Scheduled
+            </button>
+            <button
+              type="button"
+              disabled={isUpdating}
+              onClick={() => onStatusChange(item._id, item.trackingId, 'collected')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                item.status === 'collected'
+                  ? 'bg-[#2F4E3A] text-white shadow-xs'
+                  : 'text-[#14170F]/60 hover:text-[#14170F]'
+              }`}
+            >
+              Collected ✓
+            </button>
+          </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Compact Kanban Ticket Card Component ─────────────────────────────────────
+function KanbanTicketCard({
+  item,
+  onStatusChange,
+  isUpdating,
+}: {
+  item: PickupRecord;
+  onStatusChange: (id: string, trackingId: string, status: PickupStatus) => void;
+  isUpdating: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-[#14170F]/15 bg-[#F4F1E9] p-4 space-y-3 shadow-xs">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-xs font-bold text-[#14170F] bg-[#14170F]/8 px-2 py-0.5 rounded">
+          #{item.trackingId}
+        </span>
+        <span className="font-mono text-xs font-bold text-[#2F4E3A] bg-[#2F4E3A]/10 px-2 py-0.5 rounded">
+          ⚡ {item.estimatedImpactKg} kg
+        </span>
+      </div>
+      <div>
+        <h5 className="font-serif font-bold text-sm text-[#14170F] line-clamp-1">{item.address}</h5>
+        <p className="text-[11px] font-mono text-[#14170F]/60">🕒 {item.preferredWindow}</p>
+      </div>
+      <div className="text-xs text-[#14170F]/80">
+        <p className="font-medium">{item.contactName}</p>
+        <p className="font-mono text-[10px] text-[#14170F]/60 truncate">{item.contactPhone}</p>
+      </div>
+      <div className="pt-2 border-t border-[#14170F]/10 flex items-center justify-between gap-1">
+        <button
+          type="button"
+          disabled={isUpdating || item.status === 'requested'}
+          onClick={() => onStatusChange(item._id, item.trackingId, 'requested')}
+          className={`px-2 py-1 rounded text-[10px] font-mono font-bold cursor-pointer transition ${
+            item.status === 'requested' ? 'bg-[#B5652D] text-white' : 'bg-[#14170F]/5 text-[#14170F]/60 hover:bg-[#14170F]/10'
+          }`}
+        >
+          Req
+        </button>
+        <button
+          type="button"
+          disabled={isUpdating || item.status === 'scheduled'}
+          onClick={() => onStatusChange(item._id, item.trackingId, 'scheduled')}
+          className={`px-2 py-1 rounded text-[10px] font-mono font-bold cursor-pointer transition ${
+            item.status === 'scheduled' ? 'bg-[#3B6E8C] text-white' : 'bg-[#14170F]/5 text-[#14170F]/60 hover:bg-[#14170F]/10'
+          }`}
+        >
+          Sched
+        </button>
+        <button
+          type="button"
+          disabled={isUpdating || item.status === 'collected'}
+          onClick={() => onStatusChange(item._id, item.trackingId, 'collected')}
+          className={`px-2 py-1 rounded text-[10px] font-mono font-bold cursor-pointer transition ${
+            item.status === 'collected' ? 'bg-[#2F4E3A] text-white' : 'bg-[#14170F]/5 text-[#14170F]/60 hover:bg-[#14170F]/10'
+          }`}
+        >
+          Done ✓
+        </button>
       </div>
     </div>
   );
@@ -512,15 +537,15 @@ export default function Admin() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen pt-24 pb-20 interactive-spotlight-bg">
+      <main className="min-h-screen pt-28 pb-20 relative z-10 bg-transparent">
         <AdminPinGate onUnlock={handleUnlock} />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen pt-24 pb-20 interactive-spotlight-bg">
-      <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-14">
+    <main className="min-h-screen pt-28 pb-20 relative z-10 bg-transparent">
+      <div className="mx-auto max-w-[1380px] px-6 sm:px-10">
         {/* Demo-Only Administration Banner */}
         <div className="mb-8 rounded-2xl border border-[#B5652D]/30 bg-[#B5652D]/10 p-4 text-xs sm:text-sm font-medium flex items-start sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-start sm:items-center gap-3">
@@ -640,66 +665,54 @@ export default function Admin() {
           )}
         </AnimatePresence>
 
-        {/* Metric Overview Cards */}
-        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="card-3d-tactile p-5 bg-[#F4F1E9]">
+        {/* 4-Card Executive Telemetry Ribbon */}
+        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="card-3d-tactile theme-card-slate p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-semibold opacity-65 text-[#14170F]">
-                Total Requests
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#3B6E8C]">
+                Total Campus Requests
               </span>
-              <Layers size={16} className="opacity-40" />
+              <Layers size={16} className="text-[#3B6E8C]" />
             </div>
-            <p className="mt-2 text-2xl font-serif font-bold text-[#14170F]">
+            <p className="mt-2 text-3xl font-serif font-bold text-[#14170F]">
               {metrics.total}
             </p>
           </div>
 
-          <div className="card-3d-tactile p-5 bg-[#F4F1E9]">
+          <div className="card-3d-tactile theme-card-copper p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-semibold text-[#B5652D]">
-                Requested
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#B5652D]">
+                Awaiting Dispatch
               </span>
               <Clock size={16} className="text-[#B5652D]" />
             </div>
-            <p className="mt-2 text-2xl font-serif font-bold text-[#B5652D]">
+            <p className="mt-2 text-3xl font-serif font-bold text-[#B5652D]">
               {metrics.requested}
             </p>
           </div>
 
-          <div className="card-3d-tactile p-5 bg-[#F4F1E9]">
+          <div className="card-3d-tactile theme-card-emerald p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-semibold text-[#3B6E8C]">
-                Scheduled
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#2F4E3A]">
+                Scheduled Pickups
               </span>
-              <AlertCircle size={16} className="text-[#3B6E8C]" />
+              <AlertCircle size={16} className="text-[#2F4E3A]" />
             </div>
-            <p className="mt-2 text-2xl font-serif font-bold text-[#3B6E8C]">
+            <p className="mt-2 text-3xl font-serif font-bold text-[#2F4E3A]">
               {metrics.scheduled}
             </p>
           </div>
 
-          <div className="card-3d-tactile p-5 bg-[#F4F1E9]">
+          <div className="card-3d-tactile p-5 bg-[#14170F] text-[#F4F1E9] border border-[#B5652D]/40 shadow-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-semibold text-[#2F4E3A]">
-                Collected
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#B5652D]">
+                Total E-Waste Diverted
               </span>
-              <CheckCircle2 size={16} className="text-[#2F4E3A]" />
+              <Leaf size={16} className="text-[#6B8F71]" />
             </div>
-            <p className="mt-2 text-2xl font-serif font-bold text-[#2F4E3A]">
-              {metrics.collected}
-            </p>
-          </div>
-
-          <div className="col-span-2 rounded-2xl card-3d-tactile p-5 bg-[#F4F1E9] lg:col-span-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-semibold opacity-65 text-[#14170F]">
-                Total E-Waste
-              </span>
-              <Leaf size={16} className="text-[#2F4E3A]" />
-            </div>
-            <p className="mt-2 text-2xl font-serif font-bold text-[#14170F]">
+            <p className="mt-2 text-3xl font-serif font-bold text-[#F4F1E9]">
               {metrics.totalKg.toFixed(1)}{' '}
-              <span className="text-sm font-normal font-sans opacity-60">kg</span>
+              <span className="text-sm font-normal font-mono text-[#B5652D]">kg</span>
             </p>
           </div>
         </div>
@@ -771,10 +784,10 @@ export default function Admin() {
             </p>
           </div>
         ) : viewMode === 'tickets' ? (
-          /* ── View 1: Spacious 2-Column Dispatch Tickets Grid ── */
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          /* ── View 1: Sleek Full-Width Command Strips ── */
+          <div className="flex flex-col gap-4">
             {filteredPickups.map((item) => (
-              <DispatchTicketCard
+              <DispatchCommandStrip
                 key={item._id}
                 item={item}
                 onStatusChange={handleStatusChange}
@@ -811,7 +824,7 @@ export default function Admin() {
                   {/* Column Cards */}
                   <div className="space-y-4">
                     {colItems.map((item) => (
-                      <DispatchTicketCard
+                      <KanbanTicketCard
                         key={item._id}
                         item={item}
                         onStatusChange={handleStatusChange}

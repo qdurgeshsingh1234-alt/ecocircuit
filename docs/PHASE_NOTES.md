@@ -118,6 +118,26 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Built client production bundle with `npm --prefix client run build` with 0 errors; launched Playwright to verify clean visual rendering across `/guide`, `/centers`, `/admin`, and `/` at 1440px desktop; tested interactive modal checklist, Quick Unlock PIN gate, and Kanban view switching; confirmed zero console errors; verified whole-repository BOM and zero-byte cleanliness; and captured full-resolution screenshots in `docs/screenshots/stage_k_*.png`.
 5. **Remaining limitations:** Live production routing, physical electronic weighing scales, and SMS OTP authentication gateways are simulated for prototype evaluation purposes.
 
+---
+
+## Stage L: Global Simplex-Noise Wave Background, Landing Page Polish, Ultra-Clean Collector Command Strips & 12-Column Pickup Configurator
+
+1. **What it does:** Introduces a living 60fps simplex-noise topographic wave background globally across all routes, enhances hero canvas blending with cinematic edge vignettes, redesigns `/admin` with generous top spacing (`pt-28`) and sleek 12-column horizontal Command Strips featuring a unified 3-way status segmented dock, and transforms `/pickup` into a commanding 12-column interactive 3D hardware configurator with accurate hazard badges and a sticky live UN GEM 2024 environmental impact sidebar.
+2. **How it works:**
+   - Installs `simplex-noise` and creates `client/src/components/ui/wave-background.tsx` with dynamic cursor tracking, ambient halo, and copper/emerald wave lines.
+   - Mounts `<Waves />` globally in `client/src/App.tsx` and ensures all interior page containers render with transparent backgrounds so the living waves shine through.
+   - Adds cinematic left, right, and bottom vignette gradient overlays in `ScrollCanvasAnimation.tsx` so the laptop animation seamlessly blends into the dark hero without harsh vertical cutoffs, and layers `<Waves variant="dark" />` behind the hero canvas.
+   - Upgrades `Admin.tsx` with `pt-28` top padding to eliminate navbar overlap, a 4-card Executive Telemetry Ribbon, and full-width `DispatchCommandStrip` cards with a unified 3-way segmented control dock (`Requested | Scheduled | Collected ✓`).
+   - Overhauls `Pickup.tsx` into a wide 12-column split layout (`lg:col-span-8` configurator deck, `lg:col-span-4` sticky telemetry receipt sidebar):
+     - Displays accurate regulatory hazard badges (`🔥 High Lithium Hazard`, `⚠️ Mercury Vapor Risk`, `🔒 Data & Lead Solder`, `💎 Precious Metals & Li-Ion`, `❄️ Heavy / Refrigerant`, `♻️ Mixed Polymer & Copper`, `⚡ High Copper Yield`).
+     - Includes full untruncated example items, average masses, interactive quantity tiers with weight bars, quick campus zone pills, and a one-click `"Fill Demo Student"` helper.
+     - Automatically recalculates live e-waste mass, CO₂e avoided, and diverted heavy metals according to United Nations GEM 2024 standards.
+     - Renders a perforated 3D E-Waste Dispatch Boarding Pass upon submission.
+3. **Important files:** `client/src/components/ui/wave-background.tsx` (simplex-noise wave component), `client/src/App.tsx` (global background mounting), `client/src/components/ScrollCanvasAnimation.tsx` (cinematic vignettes & upgraded story beat cards), `client/src/pages/Landing.tsx` (hero waves & tactile action cards), `client/src/pages/Admin.tsx` (command strips & 3-way segmented dock), `client/src/pages/Pickup.tsx` (12-column hardware configurator & sticky telemetry sidebar).
+4. **How it was tested:** Built client production bundle with `npm --prefix client run build` confirming 0 TypeScript errors; verified with Playwright across `/`, `/pickup`, `/admin`, and `/dashboard` at 1440px desktop; tested interactive status transition via the 3-state switcher; confirmed 0 console errors; verified repository BOM and zero-byte cleanliness; and captured full-resolution screenshots in `docs/screenshots/stage_l_*.png`.
+5. **Remaining limitations:** Physical scale readings, real-time collector GPS tricycles, and live SMS gateways remain simulated for academic demonstration.
+
+
 
 
 

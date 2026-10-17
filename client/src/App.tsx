@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Nav from './components/Nav';
 import Footer from './components/Footer';
 import Landing from './pages/Landing';
@@ -8,6 +8,21 @@ import Centers from './pages/Centers';
 import Pickup from './pages/Pickup';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
+import { Waves } from './components/ui/wave-background';
+
+function GlobalBackground() {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
+  return (
+    <Waves
+      backgroundColor={isHome ? '#14170F' : '#EFECE2'}
+      className="fixed inset-0 z-0 pointer-events-none"
+      strokeColor={isHome ? 'rgba(181, 101, 45, 0.22)' : 'rgba(181, 101, 45, 0.17)'}
+      variant={isHome ? 'dark' : 'light'}
+    />
+  );
+}
 
 export default function App() {
   useEffect(() => {
@@ -21,6 +36,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <GlobalBackground />
       <Nav />
       <Routes>
         <Route path="/" element={<Landing />} />

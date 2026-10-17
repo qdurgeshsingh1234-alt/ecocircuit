@@ -313,7 +313,7 @@ export default function Centers() {
   };
 
   return (
-    <main className="min-h-screen pt-24 pb-20 interactive-spotlight-bg">
+    <main className="min-h-screen pt-28 pb-20 relative z-10 bg-transparent">
       <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 space-y-10">
         {/* ── Page Header ────────────────────────────────────────────── */}
         <div>

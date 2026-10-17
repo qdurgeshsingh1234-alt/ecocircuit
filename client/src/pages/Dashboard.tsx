@@ -674,7 +674,7 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen pt-24 pb-20" style={{ background: 'var(--paper)' }}>
+    <main className="min-h-screen pt-28 pb-20 relative z-10 bg-transparent">
       <div className="mx-auto max-w-3xl px-4 md:px-6">
         <AnimatePresence mode="wait">
           {!email ? (

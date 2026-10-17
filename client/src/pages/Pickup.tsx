@@ -1,145 +1,203 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
-  CheckCircle2, ArrowRight, ArrowLeft, Calendar, Clock, MapPin,
-  User, Mail, Phone, AlertTriangle, Copy, Check, Truck,
-  ShieldCheck, Scale, Building2,
-  Monitor, Smartphone, Battery, Refrigerator, Cpu, Lightbulb, Cable
+  CheckCircle2, ArrowRight, ArrowLeft,
+  AlertTriangle, Copy, Check, Truck,
+  ShieldCheck,
+  Monitor, Smartphone, Battery, Refrigerator, Cpu, Lightbulb, Cable,
+  Sparkles, QrCode
 } from 'lucide-react';
-import { SectionHeading, Reveal } from '../components/ui';
-import { CATEGORIES } from '../data/categories';
 
-// ── Category Icon Map ─────────────────────────────────────────────────────────
-const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>> = {
-  'it-equipment': Monitor,
-  'mobiles-accessories': Smartphone,
-  'batteries': Battery,
-  'large-appliances': Refrigerator,
-  'small-appliances': Cpu,
-  'lighting': Lightbulb,
-  'cables-peripherals': Cable,
-};
+// ── Category Configuration with Accurate Hazard Badges ────────────────────────
+interface CategoryConfig {
+  slug: string;
+  name: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  theme: string;
+  hazardBadge: { text: string; bg: string; textCol: string; border: string };
+  examples: string;
+  avgMass: string;
+  co2Factor: string;
+  baseWeightKg: number;
+}
 
-// ── Quantity options with descriptions and weight multipliers ────────────────
-const QUANTITY_OPTIONS = [
+const CATEGORY_CONFIGS: CategoryConfig[] = [
   {
-    id: '1–2 items',
-    title: '1–2 small items',
-    description: 'E.g. an old smartphone and charger, or a dead pair of earphones.',
-    icon: '📱',
-    multiplier: 1.5,
+    slug: 'batteries',
+    name: 'Batteries & Power Banks',
+    icon: Battery,
+    theme: 'theme-card-hazard',
+    hazardBadge: {
+      text: '🔥 High Lithium Hazard',
+      bg: 'rgba(155, 74, 62, 0.15)',
+      textCol: '#9B4A3E',
+      border: 'rgba(155, 74, 62, 0.3)',
+    },
+    examples: 'Power banks, laptop battery packs, lithium coin cells, rechargeable AA/AAA cells',
+    avgMass: '~0.50 kg',
+    co2Factor: '1.44 kg CO₂e/kg',
+    baseWeightKg: 0.5,
   },
   {
-    id: '3–5 items (light)',
-    title: '3–5 light items',
-    description: 'E.g. tangled cables, old adapters, headphones, power bank.',
-    icon: '🔋',
-    multiplier: 4.0,
+    slug: 'lighting',
+    name: 'Lighting & Bulbs',
+    icon: Lightbulb,
+    theme: 'theme-card-hazard',
+    hazardBadge: {
+      text: '⚠️ Mercury Vapor Risk',
+      bg: 'rgba(155, 74, 62, 0.15)',
+      textCol: '#9B4A3E',
+      border: 'rgba(155, 74, 62, 0.3)',
+    },
+    examples: 'CFL spiral bulbs, fluorescent tube lights, LED retrofit lamps, halogen fixtures',
+    avgMass: '~0.30 kg',
+    co2Factor: '1.44 kg CO₂e/kg',
+    baseWeightKg: 0.3,
   },
   {
-    id: '5+ items (mixed)',
-    title: '5+ items (hostel cleanout)',
-    description: 'E.g. semester-end drawer cleanout with laptops, cables, peripherals.',
-    icon: '📦',
-    multiplier: 8.0,
+    slug: 'it-equipment',
+    name: 'IT Equipment',
+    icon: Monitor,
+    theme: 'theme-card-emerald',
+    hazardBadge: {
+      text: '🔒 Data & Lead Solder',
+      bg: 'rgba(47, 78, 58, 0.15)',
+      textCol: '#2F4E3A',
+      border: 'rgba(47, 78, 58, 0.3)',
+    },
+    examples: 'Laptops, desktop motherboards, LCD monitors, routers, external HDDs, UPS units',
+    avgMass: '~4.50 kg',
+    co2Factor: '1.44 kg CO₂e/kg',
+    baseWeightKg: 4.5,
   },
   {
-    id: '1–2 large items',
-    title: '1–2 large items',
-    description: 'E.g. a broken desktop monitor, mini fridge, or desktop tower.',
-    icon: '🖥️',
-    multiplier: 1.5,
+    slug: 'mobiles-accessories',
+    name: 'Mobiles & Accessories',
+    icon: Smartphone,
+    theme: 'theme-card-emerald',
+    hazardBadge: {
+      text: '💎 Precious Metals & Li-Ion',
+      bg: 'rgba(47, 78, 58, 0.15)',
+      textCol: '#2F4E3A',
+      border: 'rgba(47, 78, 58, 0.3)',
+    },
+    examples: 'Smartphones, tablets, wireless earbuds, bluetooth speakers, chargers, phone cases',
+    avgMass: '~0.25 kg',
+    co2Factor: '1.44 kg CO₂e/kg',
+    baseWeightKg: 0.25,
   },
   {
-    id: 'A bag or box',
-    title: 'A full box or bag',
-    description: 'E.g. department box of obsolete office electronics or cables.',
-    icon: '📁',
-    multiplier: 5.0,
+    slug: 'large-appliances',
+    name: 'Large Appliances',
+    icon: Refrigerator,
+    theme: 'theme-card-copper',
+    hazardBadge: {
+      text: '❄️ Heavy / Refrigerant',
+      bg: 'rgba(181, 101, 45, 0.15)',
+      textCol: '#B5652D',
+      border: 'rgba(181, 101, 45, 0.3)',
+    },
+    examples: 'Hostel room mini-fridges, microwave ovens, washing units, common-room TVs',
+    avgMass: '~25.0 kg',
+    co2Factor: '1.44 kg CO₂e/kg',
+    baseWeightKg: 25.0,
   },
   {
-    id: 'More than a box',
-    title: 'Multiple boxes / lab cleanout',
-    description: 'E.g. departmental lab upgrade or bulk hostel collection.',
-    icon: '🚛',
-    multiplier: 12.0,
+    slug: 'small-appliances',
+    name: 'Small Appliances',
+    icon: Cpu,
+    theme: 'theme-card-copper',
+    hazardBadge: {
+      text: '♻️ Mixed Polymer & Copper',
+      bg: 'rgba(181, 101, 45, 0.15)',
+      textCol: '#B5652D',
+      border: 'rgba(181, 101, 45, 0.3)',
+    },
+    examples: 'Electric kettles, clothes irons, trimmers, table fans, hair dryers, smart plugs',
+    avgMass: '~1.80 kg',
+    co2Factor: '1.44 kg CO₂e/kg',
+    baseWeightKg: 1.8,
+  },
+  {
+    slug: 'cables-peripherals',
+    name: 'Cables & Peripherals',
+    icon: Cable,
+    theme: 'theme-card-slate',
+    hazardBadge: {
+      text: '⚡ High Copper Yield',
+      bg: 'rgba(59, 110, 140, 0.15)',
+      textCol: '#3B6E8C',
+      border: 'rgba(59, 110, 140, 0.3)',
+    },
+    examples: 'Laptop power bricks, HDMI/VGA cables, USB hubs, keyboards, optical mice, cords',
+    avgMass: '~0.80 kg',
+    co2Factor: '1.44 kg CO₂e/kg',
+    baseWeightKg: 0.8,
   },
 ];
 
-// ── LPU Campus Locations presets ──────────────────────────────────────────────
-const LPU_LOCATION_PRESETS = [
-  'Boys Hostel BH-1',
-  'Boys Hostel BH-2',
-  'Boys Hostel BH-3',
-  'Boys Hostel BH-4',
-  'Boys Hostel BH-5',
-  'Boys Hostel BH-6',
-  'Boys Hostel BH-7',
-  'Boys Hostel BH-8',
-  'Girls Hostel GH-1',
-  'Girls Hostel GH-2',
-  'Girls Hostel GH-3',
-  'Girls Hostel GH-4',
-  'Girls Hostel GH-5',
-  'Girls Hostel GH-6',
-  'Block 32 — Computer Science & Engineering',
-  'Block 34 — Mechanical & Civil Labs',
-  'Block 36 — Biotechnology & Sciences',
-  'Block 38 — Electronics & Electrical Labs',
-  'Block 55 — Mittal School of Business',
-  'Central Library Lobby',
-  'Uni-Mall Ground Floor',
-  'Faculty Quarters / Staff Residences',
-  'Other Campus Location',
+// ── Interactive Quantity Options ──────────────────────────────────────────────
+interface QuantityTier {
+  id: string;
+  label: string;
+  sub: string;
+  multiplier: number;
+  barPercent: number;
+}
+
+const QUANTITY_TIERS: QuantityTier[] = [
+  { id: '1–2 items', label: '1–2 items (~1.5 kg)', sub: 'Single dead device or charger set', multiplier: 1.5, barPercent: 20 },
+  { id: '3–5 items (light)', label: '3–5 items (~4.8 kg)', sub: 'Standard semester drawer cleanout', multiplier: 4.0, barPercent: 45 },
+  { id: '6–10 items', label: '6–10 items (~9.5 kg)', sub: 'Shared hostel room collection box', multiplier: 8.0, barPercent: 75 },
+  { id: 'Bulk / Department Lab', label: 'Bulk / Lab Cleanout (15+ kg)', sub: 'Department lab upgrade or floor drive', multiplier: 15.0, barPercent: 100 },
 ];
 
-// ── Scheduled Collection Windows ──────────────────────────────────────────────
-const SCHEDULED_WINDOWS = [
-  'Upcoming Saturday — Morning (9:00 AM – 1:00 PM)',
-  'Upcoming Saturday — Afternoon (1:00 PM – 5:00 PM)',
-  'Upcoming Wednesday — Afternoon (1:00 PM – 5:00 PM)',
-  'Next Saturday — Morning (9:00 AM – 1:00 PM)',
-  'Next Saturday — Afternoon (1:00 PM – 5:00 PM)',
+// ── Campus Zone Helpers ───────────────────────────────────────────────────────
+const CAMPUS_ZONES = [
+  { name: 'Boys Hostels BH-1–BH-8', preset: 'Boys Hostel BH-4' },
+  { name: 'Girls Hostels GH-1–GH-6', preset: 'Girls Hostel GH-2' },
+  { name: 'Academic Blocks 25–38', preset: 'Block 32 — Computer Science Labs' },
+  { name: 'Uni-Mall & Food Court', preset: 'Uni-Mall Ground Floor Atrium' },
+  { name: 'Faculty Residences', preset: 'Faculty Quarters — Sector 3' },
 ];
 
-// ── Form Step IDs ─────────────────────────────────────────────────────────────
+const TIME_WINDOWS = [
+  { id: 'Morning Slot: 9 AM – 1 PM', label: 'Morning Slot (9:00 AM – 1:00 PM)', desc: 'Preferred for hostel rooms before afternoon classes' },
+  { id: 'Afternoon Slot: 1 PM – 5 PM', label: 'Afternoon Slot (1:00 PM – 5:00 PM)', desc: 'Optimal for academic blocks & project labs' },
+  { id: 'Saturday Campus Drive: 10 AM – 4 PM', label: 'Saturday Campus Drive (10:00 AM – 4:00 PM)', desc: 'Weekend consolidated hostel collection circuit' },
+];
+
 const STEPS = [
-  { id: 1, name: 'Categories', label: 'E-Waste Items' },
-  { id: 2, name: 'Quantity', label: 'Weight & Size' },
-  { id: 3, name: 'Location', label: 'Campus Block & Time' },
-  { id: 4, name: 'Contact', label: 'Contact Info' },
-  { id: 5, name: 'Review', label: 'Review & Submit' },
+  { id: 1, name: 'Categories', label: 'E-Waste Types' },
+  { id: 2, name: 'Quantity', label: 'Mass & Condition' },
+  { id: 3, name: 'Location', label: 'LPU Zone & Slot' },
+  { id: 4, name: 'Contact', label: 'Student Info' },
+  { id: 5, name: 'Review', label: 'Manifest & Submit' },
 ];
 
 export default function Pickup() {
   const [searchParams] = useSearchParams();
-  const initialCategory = searchParams.get('category');
+  const initialCat = searchParams.get('category');
 
-  // Step state (1 to 5, or 6 for success)
   const [currentStep, setCurrentStep] = useState(1);
-
-  // Form Fields
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-    if (initialCategory && CATEGORIES.some((c) => c.slug === initialCategory)) {
-      return [initialCategory];
+    if (initialCat && CATEGORY_CONFIGS.some((c) => c.slug === initialCat)) {
+      return [initialCat];
     }
     return ['mobiles-accessories'];
   });
   const [quantity, setQuantity] = useState('3–5 items (light)');
+  const [itemCondition, setItemCondition] = useState<'working' | 'broken' | 'swollen'>('broken');
   const [campusPreset, setCampusPreset] = useState('Boys Hostel BH-4');
-  const [specificLocation, setSpecificLocation] = useState('');
-  const [preferredWindow, setPreferredWindow] = useState(SCHEDULED_WINDOWS[0]);
+  const [specificLocation, setSpecificLocation] = useState('Room 312');
+  const [preferredWindow, setPreferredWindow] = useState(TIME_WINDOWS[0].id);
+
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
-  const [hasDamagedBattery, setHasDamagedBattery] = useState(false);
   const [notes, setNotes] = useState('');
 
-  // Form validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submittedData, setSubmittedData] = useState<{
@@ -147,104 +205,73 @@ export default function Pickup() {
     estimatedImpactKg: number;
     status: string;
   } | null>(null);
-
-  // Copy tracking ID feedback
   const [copied, setCopied] = useState(false);
 
-  // Update selected categories if query param changes
   useEffect(() => {
-    if (initialCategory && CATEGORIES.some((c) => c.slug === initialCategory)) {
-      setSelectedCategories((prev) =>
-        prev.includes(initialCategory) ? prev : [...prev, initialCategory]
-      );
+    if (initialCat && CATEGORY_CONFIGS.some((c) => c.slug === initialCat)) {
+      setSelectedCategories((prev) => (prev.includes(initialCat) ? prev : [...prev, initialCat]));
     }
-  }, [initialCategory]);
+  }, [initialCat]);
 
-  // ── Environmental Impact Calculation Formula & Assumptions (GEM 2024) ────────
-  // Base unit weights from United Nations Global E-waste Monitor (GEM 2024):
-  // - IT Equipment: 4.5 kg | Mobiles: 1.2 kg | Batteries: 0.5 kg | Large: 30.0 kg
-  // - Small Appliances: 2.0 kg | Lighting: 0.3 kg | Cables & Peripherals: 1.0 kg
-  // Multipliers estimate quantity scale based on user selection.
-  // CO2 factor: 1 kg e-waste diverted avoids ~1.5 kg CO2e in virgin mineral extraction.
-  // Note: All impact figures are displayed as "Estimated impact (Sample data)".
-  const estimatedImpact = useMemo(() => {
-    const baseWeights: Record<string, number> = {
-      'it-equipment': 4.5,
-      'mobiles-accessories': 1.2,
-      'batteries': 0.5,
-      'large-appliances': 30.0,
-      'small-appliances': 2.0,
-      'lighting': 0.3,
-      'cables-peripherals': 1.0,
-    };
-    const totalBaseWeight = selectedCategories.reduce(
-      (sum, cat) => sum + (baseWeights[cat] ?? 2.0),
-      0
-    );
-    const selectedOption = QUANTITY_OPTIONS.find((q) => q.id === quantity);
-    const mult = selectedOption?.multiplier ?? 4.0;
-    const kg = Math.round(totalBaseWeight * mult * 10) / 10;
-    const co2Kg = Math.round(kg * 1.5 * 10) / 10;
-    return { kg, co2Kg };
+  // Telemetry Calculations (GEM 2024 Formulas)
+  const telemetry = useMemo(() => {
+    const totalBase = selectedCategories.reduce((sum, catSlug) => {
+      const cfg = CATEGORY_CONFIGS.find((c) => c.slug === catSlug);
+      return sum + (cfg?.baseWeightKg ?? 1.5);
+    }, 0);
+    const tier = QUANTITY_TIERS.find((q) => q.id === quantity) ?? QUANTITY_TIERS[1];
+    const massKg = Math.max(0.8, Math.round(totalBase * (tier.multiplier / 2.5) * 10) / 10);
+    const co2eKg = Math.round(massKg * 1.44 * 10) / 10;
+    const toxicGrams = Math.round(massKg * 7.0 * 10) / 10;
+    return { massKg, co2eKg, toxicGrams, tier };
   }, [selectedCategories, quantity]);
 
-  // Combined full address
   const fullAddress = useMemo(() => {
-    const details = specificLocation.trim() ? `, ${specificLocation.trim()}` : '';
-    return `${campusPreset}${details}, LPU Campus, Phagwara, Punjab`;
+    const room = specificLocation.trim() ? `, ${specificLocation.trim()}` : '';
+    return `${campusPreset}${room}, LPU Campus, Phagwara, Punjab`;
   }, [campusPreset, specificLocation]);
 
-  // Toggle category in multi-select
   const toggleCategory = (slug: string) => {
     setSelectedCategories((prev) => {
       if (prev.includes(slug)) {
-        if (prev.length === 1) return prev; // keep at least 1 selected
+        if (prev.length === 1) return prev; // keep at least 1
         return prev.filter((s) => s !== slug);
-      } else {
-        return [...prev, slug];
       }
+      return [...prev, slug];
     });
   };
 
-  // Step navigation validation
-  const validateStep = (step: number): boolean => {
-    const newErrors: Record<string, string> = {};
+  const handleFillDemo = () => {
+    setContactName('Arjun Sharma');
+    setContactEmail('arjun.sharma@lpu.in');
+    setContactPhone('9876543210');
+    setNotes('Hostel drawer cleanout, items bundled neatly.');
+    setErrors({});
+  };
 
-    if (step === 1) {
-      if (selectedCategories.length === 0) {
-        newErrors.categories = 'Please select at least one e-waste category.';
+  const validateCurrentStep = (step: number) => {
+    const errs: Record<string, string> = {};
+    if (step === 1 && selectedCategories.length === 0) {
+      errs.categories = 'Please select at least one e-waste category.';
+    }
+    if (step === 3 && !campusPreset) {
+      errs.location = 'Please select your campus building or block.';
+    }
+    if (step === 4) {
+      if (!contactName.trim()) errs.name = 'Full student name is required.';
+      if (!contactEmail.trim() || !contactEmail.includes('@')) {
+        errs.email = 'Valid university or personal email is required.';
       }
-    } else if (step === 2) {
-      if (!quantity) {
-        newErrors.quantity = 'Please select an estimated quantity.';
-      }
-    } else if (step === 3) {
-      if (!campusPreset) {
-        newErrors.location = 'Please select a campus hostel or department.';
-      }
-      if (!preferredWindow) {
-        newErrors.window = 'Please choose a collection time window.';
-      }
-    } else if (step === 4) {
-      if (!contactName.trim() || contactName.trim().length < 2) {
-        newErrors.contactName = 'Please enter your full name (at least 2 characters).';
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!contactEmail.trim() || !emailRegex.test(contactEmail.trim())) {
-        newErrors.contactEmail = 'Please enter a valid email address (e.g. name@lpu.in).';
-      }
-      const cleanPhone = contactPhone.replace(/\D/g, '');
-      if (!/^\d{10}$/.test(cleanPhone)) {
-        newErrors.contactPhone = 'Please enter a valid 10-digit mobile number.';
+      if (!contactPhone.trim() || contactPhone.trim().length < 10) {
+        errs.phone = 'Valid 10-digit mobile number is required.';
       }
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
+    if (validateCurrentStep(currentStep)) {
       setCurrentStep((prev) => Math.min(prev + 1, 5));
       window.scrollTo({ top: 120, behavior: 'smooth' });
     }
@@ -255,15 +282,21 @@ export default function Pickup() {
     window.scrollTo({ top: 120, behavior: 'smooth' });
   };
 
-  // Final submission to POST /api/pickups
   const handleSubmit = async () => {
-    if (!validateStep(4)) {
+    if (!validateCurrentStep(4)) {
       setCurrentStep(4);
       return;
     }
 
     setIsSubmitting(true);
     setSubmissionError(null);
+
+    const conditionText =
+      itemCondition === 'swollen'
+        ? ' [ALERT: Contains swollen/damaged battery]'
+        : itemCondition === 'working'
+        ? ' [Item working/reusable]'
+        : '';
 
     const payload = {
       categories: selectedCategories,
@@ -273,976 +306,745 @@ export default function Pickup() {
       contactName: contactName.trim(),
       contactEmail: contactEmail.trim().toLowerCase(),
       contactPhone: contactPhone.trim(),
-      notes: notes.trim() + (hasDamagedBattery ? ' [ALERT: Contains swollen/damaged battery]' : ''),
+      notes: notes.trim() + conditionText,
     };
 
     try {
-      const response = await fetch('/api/pickups', {
+      const res = await fetch('/api/pickups', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      const resData = await response.json();
-
-      if (!response.ok || !resData.success) {
-        throw new Error(resData.error || 'Failed to submit pickup request.');
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to submit pickup request.');
       }
 
       setSubmittedData({
-        trackingId: resData.data.trackingId,
-        estimatedImpactKg: resData.data.estimatedImpactKg,
-        status: resData.data.status || 'requested',
+        trackingId: json.data.trackingId,
+        estimatedImpactKg: json.data.estimatedImpactKg ?? telemetry.massKg,
+        status: json.data.status || 'requested',
       });
-      setCurrentStep(6); // 6 indicates success screen
+      setCurrentStep(6);
       window.scrollTo({ top: 80, behavior: 'smooth' });
-    } catch (err: any) {
-      setSubmissionError(err.message || 'Network error occurred. Please try again.');
+    } catch (err) {
+      setSubmissionError(err instanceof Error ? err.message : 'Submission failed. Please check network.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Copy tracking ID helper
-  const handleCopyId = () => {
-    if (submittedData?.trackingId) {
-      navigator.clipboard.writeText(submittedData.trackingId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const handleCopyTracking = () => {
+    if (!submittedData?.trackingId) return;
+    navigator.clipboard.writeText(submittedData.trackingId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   return (
-    <main className="pt-24 pb-20 min-h-screen bg-[var(--paper)]">
-      <div className="max-w-3xl mx-auto px-4 md:px-6">
-
-        {/* ── Page Header ────────────────────────────────────────────── */}
-        <div className="mb-8 text-center sm:text-left">
-          <SectionHeading
-            eyebrow="Hostel & Department Collection"
-            title="Request a campus e-waste collection"
-            subtitle="Our campus collector visits LPU hostel blocks and academic departments on scheduled collection days. No street addresses required."
-          />
-          <div className="mt-3 flex flex-wrap items-center gap-2.5">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--copper)]/10 text-[var(--copper)] border border-[var(--copper)]/20">
+    <main className="min-h-screen pt-28 pb-20 relative z-10 bg-transparent">
+      <div className="mx-auto max-w-[1380px] px-6 sm:px-10">
+        {/* Page Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#2F4E3A]/30 bg-[#2F4E3A]/10 px-3 py-0.5 text-xs font-semibold tracking-wide uppercase text-[#2F4E3A]">
+              <Truck size={13} className="text-[#B5652D]" />
+              Hostel Collection Dispatch · LPU Campus
+            </span>
+            <span className="rounded-full border border-[#14170F]/15 px-2.5 py-0.5 text-xs font-mono text-[#14170F]/60">
               Sample data
             </span>
-            <span className="text-xs text-[var(--ink)]/50">
-              Prototype system for Lovely Professional University campus demonstration.
-            </span>
           </div>
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#14170F] tracking-tight">
+            Schedule E-Waste Campus Pickup
+          </h1>
+          <p className="mt-1 text-sm text-[#14170F]/70 max-w-2xl">
+            A collector visits your hostel block or academic department on scheduled days. Follow CPCB 2022 safety protocols and track your live circular impact.
+          </p>
         </div>
 
-        {/* ── Progress Indicators Bar (Steps 1 to 5) ───────────────────── */}
-        {currentStep <= 5 && (
-          <Reveal delay={0.05}>
-            <div className="mb-10 p-4 sm:p-5 rounded-xl bg-[var(--paper)] border border-[var(--sand)] relative">
-              <div className="relative flex items-center justify-between">
-                {/* Connecting background line */}
-                <div className="absolute top-1/2 left-4 right-4 -translate-y-1/2 h-1 bg-[var(--sand)]/60 rounded-full -z-0" />
-                {/* Connecting active filled line */}
-                <motion.div
-                  className="absolute top-1/2 left-4 -translate-y-1/2 h-1 rounded-full bg-[var(--moss)] -z-0"
-                  initial={false}
-                  animate={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 92}%` }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-                />
+        {/* 12-Column Split Command Center */}
+        {currentStep === 6 && submittedData ? (
+          /* ── Step 6: 3D Perforated E-Waste Boarding Pass ── */
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="rounded-3xl border-2 border-[#2F4E3A] bg-[#F4F1E9] p-8 shadow-2xl relative overflow-hidden card-3d-tactile">
+              {/* Top Perforation / Tear Strip Graphic */}
+              <div className="absolute top-0 inset-x-0 h-3 bg-gradient-to-r from-[#2F4E3A] via-[#B5652D] to-[#2F4E3A]" />
+              
+              <div className="flex items-center justify-between pb-6 border-b border-[#14170F]/15">
+                <div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#2F4E3A]">
+                    Official Campus Dispatch Manifest
+                  </span>
+                  <h3 className="text-2xl font-serif font-bold text-[#14170F]">Collection Ticket Confirmed</h3>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-[#2F4E3A]/15 text-[#2F4E3A] flex items-center justify-center">
+                  <CheckCircle2 size={28} />
+                </div>
+              </div>
 
-                {STEPS.map((s) => {
-                  const isCompleted = s.id < currentStep;
-                  const isCurrent = s.id === currentStep;
+              {/* Monospace Tracking Code Box */}
+              <div className="my-6 p-6 rounded-2xl bg-[#14170F] text-[#F4F1E9] flex flex-col sm:flex-row items-center justify-between gap-4 border border-[#B5652D]/40 shadow-inner">
+                <div>
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#B5652D]">
+                    Tracking Identifier
+                  </span>
+                  <p className="text-3xl font-mono font-bold tracking-wider text-[#F4F1E9]">
+                    {submittedData.trackingId}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyTracking}
+                  className="btn-3d-copper px-4 py-2.5 rounded-xl text-xs font-mono font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  <span>{copied ? 'Copied!' : 'Copy ID'}</span>
+                </button>
+              </div>
+
+              {/* Manifest Metadata Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono pb-6 border-b border-[#14170F]/15">
+                <div>
+                  <span className="opacity-60 block">Pickup Location:</span>
+                  <span className="font-bold text-sm text-[#14170F] font-sans">{fullAddress}</span>
+                </div>
+                <div>
+                  <span className="opacity-60 block">Scheduled Window:</span>
+                  <span className="font-bold text-[#14170F]">{preferredWindow}</span>
+                </div>
+                <div>
+                  <span className="opacity-60 block">Registered Student:</span>
+                  <span className="font-bold text-[#14170F]">{contactName} ({contactPhone})</span>
+                </div>
+                <div>
+                  <span className="opacity-60 block">Estimated Diverted Mass:</span>
+                  <span className="font-bold text-[#2F4E3A]">⚡ {submittedData.estimatedImpactKg} kg (~{Math.round(submittedData.estimatedImpactKg * 1.44)} kg CO₂e)</span>
+                </div>
+              </div>
+
+              {/* Perforation notches */}
+              <div className="relative my-4 flex items-center justify-between">
+                <div className="w-5 h-5 rounded-full bg-[#EFECE2] -ml-11 border-r border-[#14170F]/15" />
+                <div className="flex-1 border-t-2 border-dashed border-[#14170F]/20 mx-2" />
+                <div className="w-5 h-5 rounded-full bg-[#EFECE2] -mr-11 border-l border-[#14170F]/15" />
+              </div>
+
+              {/* QR Verification Placeholder */}
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-white border border-[#14170F]/15">
+                    <QrCode size={40} className="text-[#14170F]" />
+                  </div>
+                  <div className="text-[11px] text-[#14170F]/70">
+                    <p className="font-bold text-[#14170F]">Physical Handover Verification</p>
+                    <p>Show this boarding pass to the campus driver when collection arrives.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-4">
+              <Link to="/dashboard" className="btn-3d-moss px-5 py-3 rounded-xl text-xs font-bold inline-flex items-center gap-2">
+                <ShieldCheck size={16} /> Track in Impact Dashboard
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmittedData(null);
+                  setCurrentStep(1);
+                }}
+                className="px-5 py-3 rounded-xl text-xs font-mono font-bold border border-[#14170F]/20 hover:bg-[#E4DCC6] transition"
+              >
+                Book Another Pickup
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* ── Left 8 Columns: Interactive 5-Step Configurator Deck ── */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* Upgraded 3D Step Progress Bar */}
+              <div className="bg-[#14170F] text-[#F4F1E9] p-4 rounded-2xl shadow-xl flex items-center justify-between gap-2 border border-[#B5652D]/30">
+                {STEPS.map((step) => {
+                  const isDone = currentStep > step.id;
+                  const isActive = currentStep === step.id;
 
                   return (
-                    <div
-                      key={s.id}
-                      className="relative z-10 flex flex-col items-center group cursor-default"
+                    <button
+                      key={step.id}
+                      type="button"
+                      disabled={step.id > currentStep}
+                      onClick={() => isDone && setCurrentStep(step.id)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 px-1 rounded-xl transition cursor-pointer ${
+                        isActive
+                          ? 'bg-[#B5652D] text-white shadow-[0_0_12px_rgba(181,101,45,0.6)]'
+                          : isDone
+                          ? 'bg-[#2F4E3A]/60 text-[#6B8F71] hover:bg-[#2F4E3A]'
+                          : 'opacity-40 cursor-not-allowed text-[#F4F1E9]/60'
+                      }`}
                     >
-                      <motion.div
-                        initial={false}
-                        animate={{ scale: isCurrent ? 1.08 : 1 }}
-                        transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                        className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
-                          isCompleted
-                            ? 'bg-[var(--moss)] text-[var(--paper)]'
-                            : isCurrent
-                            ? 'bg-[var(--copper)] text-[var(--paper)] ring-2 ring-[var(--copper)]/30'
-                            : 'bg-[var(--sand)]/40 text-[var(--ink)]/40 border border-[var(--sand)]'
-                        }`}
-                      >
-                        {isCompleted ? <Check size={14} strokeWidth={2.5} /> : s.id}
-                      </motion.div>
-                      <span
-                        className={`mt-1.5 text-[11px] tracking-tight hidden sm:block ${
-                          isCurrent
-                            ? 'text-[var(--ink)] font-bold'
-                            : isCompleted
-                            ? 'text-[var(--moss)] font-medium'
-                            : 'text-[var(--ink)]/40 font-normal'
-                        }`}
-                      >
-                        {s.name}
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-bold border border-current">
+                        {isDone ? '✓' : step.id}
                       </span>
-                    </div>
+                      <span className="hidden sm:inline text-xs font-mono font-semibold tracking-wide">
+                        {step.name}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
-            </div>
-          </Reveal>
-        )}
 
-        {/* ── Multi-Step Form Container ───────────────────────────────── */}
-        <AnimatePresence mode="wait">
-
-          {/* ─────────────────────────────────────────────────────────── */}
-          {/* STEP 1: Categories Multi-Select                             */}
-          {/* ─────────────────────────────────────────────────────────── */}
-          {currentStep === 1 && (
-            <motion.div
-              key="step-1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-6"
-            >
-              <div className="p-6 sm:p-8 rounded-xl bg-[var(--paper)] border border-[var(--sand)] shadow-xs space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--ink)]">
-                    Step 1: What items are you handing in?
-                  </h3>
-                  <p className="mt-1 text-xs text-[var(--ink)]/60">
-                    Select all e-waste categories that apply to your collection. You can choose multiple.
-                  </p>
-                </div>
-
-                {errors.categories && (
-                  <div className="p-3 rounded-lg bg-[var(--rust)]/10 border border-[var(--rust)]/25 text-xs text-[var(--rust)] flex items-center gap-2">
-                    <AlertTriangle size={14} />
-                    <span>{errors.categories}</span>
-                  </div>
-                )}
-
-                {/* Category Selection Grid: Large Clickable Tile Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
-                  {CATEGORIES.map((cat) => {
-                    const isSelected = selectedCategories.includes(cat.slug);
-                    const IconComp = CATEGORY_ICON_MAP[cat.slug] || Cpu;
-
-                    return (
-                      <div
-                        key={cat.slug}
-                        onClick={() => toggleCategory(cat.slug)}
-                        className={`relative p-4 sm:p-5 rounded-xl flex flex-col items-center text-center justify-between min-h-[160px] transition-all duration-200 cursor-pointer select-none group ${
-                          isSelected
-                            ? 'border-2 border-[var(--copper)] bg-[color-mix(in_srgb,var(--copper)_8%,var(--paper))] shadow-sm scale-[1.01]'
-                            : 'border border-[var(--sand)] bg-[var(--paper)] hover:border-[var(--copper)]/50 hover:bg-[color-mix(in_srgb,var(--sand)_20%,var(--paper))] shadow-xs'
-                        }`}
-                      >
-                        {/* Top-right selection pill indicator */}
-                        <div
-                          className={`absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                            isSelected
-                              ? 'bg-[var(--copper)] text-white shadow-xs scale-100'
-                              : 'bg-[var(--sand)]/30 text-transparent scale-90 opacity-0 group-hover:opacity-40'
-                          }`}
-                        >
-                          <Check size={11} strokeWidth={3} />
-                        </div>
-
-                        {/* Large Icon Container */}
-                        <div
-                          className={`w-13 h-13 rounded-2xl flex items-center justify-center transition-all duration-200 mt-1 ${
-                            isSelected
-                              ? 'bg-[var(--copper)]/12 text-[var(--copper)] shadow-inner'
-                              : 'bg-[var(--sand)]/30 text-[var(--ink)]/60 group-hover:text-[var(--copper)] group-hover:bg-[var(--copper)]/8'
-                          }`}
-                        >
-                          <IconComp size={26} strokeWidth={1.8} />
-                        </div>
-
-                        {/* Centered Title & Details */}
-                        <div className="my-2 text-center w-full">
-                          <h4 className="text-sm font-semibold text-[var(--ink)] tracking-tight leading-tight">
-                            {cat.name}
-                          </h4>
-                          <p className="mt-1 text-[11px] text-[var(--ink)]/50 leading-tight line-clamp-1">
-                            {cat.examples.slice(0, 2).join(', ')}
-                          </p>
-                        </div>
-
-                        {/* Risk / category tag badge */}
-                        <span
-                          className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full"
-                          style={{
-                            backgroundColor: isSelected ? 'rgba(181,101,45,0.1)' : 'rgba(20,23,15,0.05)',
-                            color: isSelected ? 'var(--copper)' : 'var(--ink)',
-                            opacity: isSelected ? 1 : 0.65,
-                          }}
-                        >
-                          {cat.riskLabel}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-2 flex items-center justify-between text-xs text-[var(--ink)]/50 border-t border-[var(--sand)]">
-                  <span>Selected: {selectedCategories.length} categories</span>
-                  <span>Minimum 1 category required</span>
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-between">
-                <Link
-                  to="/centers"
-                  className="text-xs text-[var(--ink)]/60 hover:text-[var(--ink)] underline inline-flex items-center gap-1"
-                >
-                  Looking for campus drop-off bins instead?
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium bg-[var(--copper)] text-[var(--paper)] hover:bg-[#a05626] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm ml-auto"
-                >
-                  Continue to Quantity <ArrowRight size={15} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ─────────────────────────────────────────────────────────── */}
-          {/* STEP 2: Quantity & Estimated Impact Preview                 */}
-          {/* ─────────────────────────────────────────────────────────── */}
-          {currentStep === 2 && (
-            <motion.div
-              key="step-2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-6"
-            >
-              <div className="p-6 sm:p-8 rounded-2xl bg-[var(--paper)] border border-[var(--sand)] shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--ink)]">
-                    Step 2: Approximate volume & weight
-                  </h3>
-                  <p className="mt-1 text-xs text-[var(--ink)]/60">
-                    Help our collection team bring suitable containers or trolleys to your hostel block or department.
-                  </p>
-                </div>
-
-                {errors.quantity && (
-                  <div className="p-3 rounded-lg bg-[var(--rust)]/10 border border-[var(--rust)]/25 text-xs text-[var(--rust)] flex items-center gap-2">
-                    <AlertTriangle size={14} />
-                    <span>{errors.quantity}</span>
-                  </div>
-                )}
-
-                {/* Quantity selection radio cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  {QUANTITY_OPTIONS.map((opt) => {
-                    const isSelected = quantity === opt.id;
-                    return (
-                      <div
-                        key={opt.id}
-                        onClick={() => setQuantity(opt.id)}
-                        className={`p-4 rounded-xl transition-all duration-200 cursor-pointer flex items-start gap-3.5 select-none ${
-                          isSelected
-                            ? 'border-2 border-[var(--copper)] bg-white shadow-[0_0_20px_rgba(181,101,45,0.18)] ring-4 ring-[var(--copper)]/20 scale-[1.02]'
-                            : 'border border-[var(--sand)] bg-white/70 hover:bg-white hover:border-[var(--copper)]/30 hover:scale-[1.01] shadow-xs'
-                        }`}
-                      >
-                        <span className="text-2xl shrink-0 mt-0.5">{opt.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-[var(--ink)]">
-                            {opt.title}
-                          </h4>
-                          <p className="mt-1 text-[11px] text-[var(--ink)]/60 leading-relaxed">
-                            {opt.description}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Live Impact Preview Callout */}
-                <div className="p-4 rounded-xl bg-[var(--moss)]/8 border border-[var(--moss)]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--moss)]/15 flex items-center justify-center shrink-0 text-[var(--moss)]">
-                      <Scale size={20} />
-                    </div>
+              {/* Form Step Body */}
+              <div className="rounded-2xl border border-[#14170F]/15 bg-[#F4F1E9] p-6 sm:p-8 card-3d-tactile">
+                {/* ── Step 1: Category Selection ── */}
+                {currentStep === 1 && (
+                  <div className="space-y-6">
                     <div>
-                      <p className="text-[11px] uppercase tracking-wider font-semibold text-[var(--moss)]">
-                        Estimated Impact Preview (Sample data)
+                      <h3 className="text-xl font-serif font-bold text-[#14170F]">
+                        Select E-Waste Categories
+                      </h3>
+                      <p className="text-xs text-[#14170F]/70 mt-1">
+                        Choose all device groups you need collected. Each category has regulatory handling requirements under CPCB Rules 2022.
                       </p>
-                      <p className="text-xs text-[var(--ink)]/70">
-                        Based on {selectedCategories.length} selected categories and {quantity}.
-                      </p>
+                      {errors.categories && (
+                        <p className="text-xs font-mono text-[#9B4A3E] font-semibold mt-2 flex items-center gap-1">
+                          <AlertTriangle size={14} /> {errors.categories}
+                        </p>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-right shrink-0">
-                    <div>
-                      <p className="text-base font-bold text-[var(--moss)]">
-                        ~{estimatedImpact.kg} kg
-                      </p>
-                      <p className="text-[10px] text-[var(--ink)]/50">E-waste Diverted</p>
-                    </div>
-                    <div className="h-6 w-px bg-[var(--sand)]" />
-                    <div>
-                      <p className="text-base font-bold text-[var(--copper)]">
-                        ~{estimatedImpact.co2Kg} kg
-                      </p>
-                      <p className="text-[10px] text-[var(--ink)]/50">CO₂e Prevented</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Form Actions */}
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium bg-[var(--sand)]/60 text-[var(--ink)] hover:bg-[var(--sand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium bg-[var(--copper)] text-[var(--paper)] hover:bg-[#a05626] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm ml-auto"
-                >
-                  Continue to Schedule <ArrowRight size={15} />
-                </button>
-              </div>
-            </motion.div>
-          )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {CATEGORY_CONFIGS.map((cat) => {
+                        const IconComp = cat.icon;
+                        const isSelected = selectedCategories.includes(cat.slug);
 
-          {/* ─────────────────────────────────────────────────────────── */}
-          {/* STEP 3: Campus Location & Collection Window                 */}
-          {/* ─────────────────────────────────────────────────────────── */}
-          {currentStep === 3 && (
-            <motion.div
-              key="step-3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-6"
-            >
-              <div className="p-6 sm:p-8 rounded-2xl bg-[var(--paper)] border border-[var(--sand)] shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--ink)]">
-                    Step 3: Campus location & preferred time
-                  </h3>
-                  <p className="mt-1 text-xs text-[var(--ink)]/60">
-                    The collector will visit your hostel block reception, common room, or department lab on the selected date.
-                  </p>
-                </div>
+                        return (
+                          <div
+                            key={cat.slug}
+                            onClick={() => toggleCategory(cat.slug)}
+                            className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer ${cat.theme} ${
+                              isSelected
+                                ? 'ring-2 ring-[#B5652D] shadow-md -translate-y-1'
+                                : 'opacity-85 hover:opacity-100 hover:border-[#14170F]/30'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-[#14170F]/8 text-[#14170F]">
+                                  <IconComp size={18} />
+                                </div>
+                                <div>
+                                  <h4 className="font-serif font-bold text-sm text-[#14170F] leading-tight">
+                                    {cat.name}
+                                  </h4>
+                                  <span className="text-[10px] font-mono text-[#14170F]/60">
+                                    Avg: {cat.avgMass}
+                                  </span>
+                                </div>
+                              </div>
+                              <div
+                                className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                                  isSelected ? 'bg-[#B5652D] border-[#B5652D] text-white' : 'border-[#14170F]/30'
+                                }`}
+                              >
+                                {isSelected && <Check size={12} />}
+                              </div>
+                            </div>
 
-                {/* Campus Location Preset Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <Building2 size={14} className="text-[var(--moss)]" />
-                    Hostel Block / Department / Campus Facility
-                  </label>
-                  <select
-                    value={campusPreset}
-                    onChange={(e) => setCampusPreset(e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm bg-[var(--paper)] border border-[var(--sand)] rounded-xl text-[var(--ink)] focus:outline-none focus:border-[var(--moss)] focus:ring-1 focus:ring-[var(--moss)] transition-all"
-                  >
-                    {LPU_LOCATION_PRESETS.map((loc) => (
-                      <option key={loc} value={loc}>
-                        {loc}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Specific Room / Floor Details */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <MapPin size={14} className="text-[var(--copper)]" />
-                    Specific Room Number, Floor, or Landmark (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="E.g. Room 312, 3rd Floor, or Central Reception Desk"
-                    value={specificLocation}
-                    onChange={(e) => setSpecificLocation(e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm bg-[var(--paper)] border border-[var(--sand)] rounded-xl text-[var(--ink)] placeholder:text-[var(--ink)]/40 focus:outline-none focus:border-[var(--moss)] focus:ring-1 focus:ring-[var(--moss)] transition-all"
-                  />
-                  <p className="text-[11px] text-[var(--ink)]/50">
-                    Preview: <span className="font-medium text-[var(--ink)]">{fullAddress}</span>
-                  </p>
-                </div>
-
-                {/* Scheduled Time Window */}
-                <div className="space-y-2 pt-2 border-t border-[var(--sand)]">
-                  <label className="text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <Calendar size={14} className="text-[var(--moss)]" />
-                    Scheduled Campus Collection Day & Time Window
-                  </label>
-                  <div className="space-y-2">
-                    {SCHEDULED_WINDOWS.map((win) => {
-                      const isSelected = preferredWindow === win;
-                      return (
-                        <div
-                          key={win}
-                          onClick={() => setPreferredWindow(win)}
-                          className={`p-3 rounded-xl border text-xs font-medium cursor-pointer flex items-center justify-between transition-all select-none ${
-                            isSelected
-                              ? 'border-[var(--moss)] bg-[var(--moss)]/10 text-[var(--moss)] font-semibold'
-                              : 'border-[var(--sand)] bg-[var(--sand)]/20 text-[var(--ink)]/75 hover:bg-[var(--sand)]/40'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Clock size={14} className={isSelected ? 'text-[var(--moss)]' : 'text-[var(--ink)]/40'} />
-                            {win}
-                          </span>
-                          {isSelected && <Check size={14} strokeWidth={2.5} />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium bg-[var(--sand)]/60 text-[var(--ink)] hover:bg-[var(--sand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium bg-[var(--copper)] text-[var(--paper)] hover:bg-[#a05626] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm ml-auto"
-                >
-                  Continue to Contact <ArrowRight size={15} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ─────────────────────────────────────────────────────────── */}
-          {/* STEP 4: Contact Information                                 */}
-          {/* ─────────────────────────────────────────────────────────── */}
-          {currentStep === 4 && (
-            <motion.div
-              key="step-4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-6"
-            >
-              <div className="p-6 sm:p-8 rounded-2xl bg-[var(--paper)] border border-[var(--sand)] shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--ink)]">
-                    Step 4: Contact details
-                  </h3>
-                  <p className="mt-1 text-xs text-[var(--ink)]/60">
-                    The campus collector will call or SMS upon arriving at your hostel block or department lobby.
-                  </p>
-                </div>
-
-                {/* Name */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <User size={14} className="text-[var(--moss)]" />
-                    Full Name <span className="text-[var(--rust)]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="E.g. Arjun Sharma / Dr. Priya Mehta"
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    className={`w-full px-4 py-2.5 text-sm bg-[var(--paper)] border rounded-xl text-[var(--ink)] focus:outline-none transition-all ${
-                      errors.contactName
-                        ? 'border-[var(--rust)] focus:ring-1 focus:ring-[var(--rust)]'
-                        : 'border-[var(--sand)] focus:border-[var(--moss)] focus:ring-1 focus:ring-[var(--moss)]'
-                    }`}
-                  />
-                  {errors.contactName && (
-                    <p className="text-[11px] text-[var(--rust)]">{errors.contactName}</p>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <Mail size={14} className="text-[var(--copper)]" />
-                    Email Address <span className="text-[var(--rust)]">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="E.g. student.123@lpu.in"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    className={`w-full px-4 py-2.5 text-sm bg-[var(--paper)] border rounded-xl text-[var(--ink)] focus:outline-none transition-all ${
-                      errors.contactEmail
-                        ? 'border-[var(--rust)] focus:ring-1 focus:ring-[var(--rust)]'
-                        : 'border-[var(--sand)] focus:border-[var(--moss)] focus:ring-1 focus:ring-[var(--moss)]'
-                    }`}
-                  />
-                  {errors.contactEmail && (
-                    <p className="text-[11px] text-[var(--rust)]">{errors.contactEmail}</p>
-                  )}
-                  <p className="text-[11px] text-[var(--ink)]/45">
-                    A collection confirmation and tracking code will be sent here.
-                  </p>
-                </div>
-
-                {/* Phone */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <Phone size={14} className="text-[var(--moss)]" />
-                    Mobile Phone Number <span className="text-[var(--rust)]">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="E.g. +91 98765 43210"
-                    value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    className={`w-full px-4 py-2.5 text-sm bg-[var(--paper)] border rounded-xl text-[var(--ink)] focus:outline-none transition-all ${
-                      errors.contactPhone
-                        ? 'border-[var(--rust)] focus:ring-1 focus:ring-[var(--rust)]'
-                        : 'border-[var(--sand)] focus:border-[var(--moss)] focus:ring-1 focus:ring-[var(--moss)]'
-                    }`}
-                  />
-                  {errors.contactPhone && (
-                    <p className="text-[11px] text-[var(--rust)]">{errors.contactPhone}</p>
-                  )}
-                </div>
-
-                {/* Swollen / Damaged Battery Safety Checkbox */}
-                <div className="pt-2 border-t border-[var(--sand)]">
-                  <label
-                    onClick={() => setHasDamagedBattery(!hasDamagedBattery)}
-                    className="p-3.5 rounded-xl border border-[var(--rust)]/30 bg-[var(--rust)]/5 flex items-start gap-3 cursor-pointer select-none"
-                  >
-                    <div
-                      className={`w-5 h-5 rounded mt-0.5 flex items-center justify-center shrink-0 border transition-all ${
-                        hasDamagedBattery
-                          ? 'bg-[var(--rust)] border-[var(--rust)] text-[var(--paper)]'
-                          : 'border-[var(--rust)]/40 bg-[var(--paper)]'
-                      }`}
-                    >
-                      {hasDamagedBattery && <Check size={12} strokeWidth={3} />}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                        <AlertTriangle size={13} className="text-[var(--rust)]" />
-                        Any swollen, bulging, or damaged lithium batteries?
-                      </h4>
-                      <p className="mt-0.5 text-[11px] text-[var(--ink)]/65 leading-relaxed">
-                        Check this box if any items have bloated batteries. Our collector will bring an insulated fireproof transport bag for safe handling.
-                      </p>
-                    </div>
-                  </label>
-                </div>
-
-                {/* Optional handover notes */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[var(--ink)]">
-                    Additional Handover Notes (Optional)
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="E.g. Leave with security guard at BH-4 gate if unavailable."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-4 py-2 text-sm bg-[var(--paper)] border border-[var(--sand)] rounded-xl text-[var(--ink)] placeholder:text-[var(--ink)]/40 focus:outline-none focus:border-[var(--moss)] focus:ring-1 focus:ring-[var(--moss)] transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium bg-[var(--sand)]/60 text-[var(--ink)] hover:bg-[var(--sand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium bg-[var(--copper)] text-[var(--paper)] hover:bg-[#a05626] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm ml-auto"
-                >
-                  Review Request <ArrowRight size={15} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ─────────────────────────────────────────────────────────── */}
-          {/* STEP 5: Review & Submit                                     */}
-          {/* ─────────────────────────────────────────────────────────── */}
-          {currentStep === 5 && (
-            <motion.div
-              key="step-5"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-6"
-            >
-              <div className="p-6 sm:p-8 rounded-2xl bg-[var(--paper)] border border-[var(--sand)] shadow-sm space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--ink)]">
-                      Step 5: Review your collection request
-                    </h3>
-                    <p className="mt-1 text-xs text-[var(--ink)]/60">
-                      Please verify the details below before submitting.
-                    </p>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--copper)]/10 text-[var(--copper)] border border-[var(--copper)]/20 shrink-0">
-                    Sample data
-                  </span>
-                </div>
-
-                {submissionError && (
-                  <div className="p-4 rounded-xl bg-[var(--rust)]/10 border border-[var(--rust)]/30 text-xs text-[var(--rust)] flex items-start gap-2.5">
-                    <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Submission failed</p>
-                      <p className="mt-0.5">{submissionError}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Review Grid */}
-                <div className="divide-y divide-[var(--sand)]">
-
-                  {/* Section 1: Categories */}
-                  <div className="py-3.5 flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--ink)]/50">
-                        E-Waste Categories
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 mt-1">
-                        {selectedCategories.map((slug) => {
-                          const cat = CATEGORIES.find((c) => c.slug === slug);
-                          return (
-                            <span
-                              key={slug}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-[var(--sand)]/60 text-[var(--ink)]/80"
-                            >
+                            {/* Accurate Real Hazard Badge */}
+                            <div className="my-2">
                               <span
-                                className="w-1.5 h-1.5 rounded-full"
-                                style={{ backgroundColor: cat?.color || 'var(--signal)' }}
+                                className="inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded"
+                                style={{
+                                  backgroundColor: cat.hazardBadge.bg,
+                                  color: cat.hazardBadge.textCol,
+                                  border: `1px solid ${cat.hazardBadge.border}`,
+                                }}
+                              >
+                                {cat.hazardBadge.text}
+                              </span>
+                            </div>
+
+                            {/* Full Untruncated Examples */}
+                            <p className="text-xs text-[#14170F]/80 leading-relaxed">
+                              {cat.examples}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Step 2: Quantity & Condition ── */}
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-serif font-bold text-[#14170F]">
+                        Estimated Quantity & Hardware State
+                      </h3>
+                      <p className="text-xs text-[#14170F]/70 mt-1">
+                        Select the volume tier so our campus collection tricycle allocates sufficient bin space.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {QUANTITY_TIERS.map((tier) => {
+                        const isSelected = quantity === tier.id;
+                        return (
+                          <div
+                            key={tier.id}
+                            onClick={() => setQuantity(tier.id)}
+                            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-[#B5652D] bg-[#B5652D]/8 ring-2 ring-[#B5652D] shadow-sm -translate-y-0.5'
+                                : 'border-[#14170F]/15 bg-white hover:border-[#14170F]/30'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="font-serif font-bold text-sm text-[#14170F]">
+                                {tier.label}
+                              </span>
+                              <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                  isSelected ? 'bg-[#B5652D] border-[#B5652D] text-white' : 'border-[#14170F]/30'
+                                }`}
+                              >
+                                {isSelected && <Check size={10} />}
+                              </div>
+                            </div>
+                            <p className="text-xs text-[#14170F]/70 mb-3">{tier.sub}</p>
+                            {/* Visual Weight Bar */}
+                            <div className="h-1.5 w-full bg-[#14170F]/10 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-[#2F4E3A] to-[#B5652D]"
+                                style={{ width: `${tier.barPercent}%` }}
                               />
-                              {cat?.name || slug}
-                            </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Condition Selector */}
+                    <div className="pt-4 border-t border-[#14170F]/10 space-y-3">
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#14170F]/70 block">
+                        Hardware Condition Assessment:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setItemCondition('working')}
+                          className={`p-3 rounded-xl border text-left cursor-pointer transition ${
+                            itemCondition === 'working'
+                              ? 'border-[#2F4E3A] bg-[#2F4E3A]/10 text-[#2F4E3A] ring-1 ring-[#2F4E3A]'
+                              : 'border-[#14170F]/15 bg-white hover:bg-[#E4DCC6]/40'
+                          }`}
+                        >
+                          <span className="text-xs font-bold block">✓ Working / Reusable</span>
+                          <span className="text-[10px] text-[#14170F]/60">Eligible for refurbished student donation</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setItemCondition('broken')}
+                          className={`p-3 rounded-xl border text-left cursor-pointer transition ${
+                            itemCondition === 'broken'
+                              ? 'border-[#B5652D] bg-[#B5652D]/10 text-[#B5652D] ring-1 ring-[#B5652D]'
+                              : 'border-[#14170F]/15 bg-white hover:bg-[#E4DCC6]/40'
+                          }`}
+                        >
+                          <span className="text-xs font-bold block">⚙ Broken / Parts</span>
+                          <span className="text-[10px] text-[#14170F]/60">Board metal extraction & circular yield</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setItemCondition('swollen')}
+                          className={`p-3 rounded-xl border text-left cursor-pointer transition ${
+                            itemCondition === 'swollen'
+                              ? 'border-[#9B4A3E] bg-[#9B4A3E]/10 text-[#9B4A3E] ring-1 ring-[#9B4A3E]'
+                              : 'border-[#14170F]/15 bg-white hover:bg-[#E4DCC6]/40'
+                          }`}
+                        >
+                          <span className="text-xs font-bold block">🔥 Swollen Battery</span>
+                          <span className="text-[10px] text-[#9B4A3E]">Requires fire-retardant pouch pickup</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Step 3: LPU Campus Location & Time Slot ── */}
+                {currentStep === 3 && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-serif font-bold text-[#14170F]">
+                        Campus Block & Time Slot
+                      </h3>
+                      <p className="text-xs text-[#14170F]/70 mt-1">
+                        Select an LPU campus zone helper to pre-fill your location, then specify your room or lab.
+                      </p>
+                    </div>
+
+                    {/* Quick-Select Campus Zone Pills */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#B5652D]">
+                        Quick Campus Zone Helpers:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {CAMPUS_ZONES.map((zone) => (
+                          <button
+                            key={zone.name}
+                            type="button"
+                            onClick={() => setCampusPreset(zone.preset)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium border transition cursor-pointer ${
+                              campusPreset.includes(zone.preset.split(' ')[0])
+                                ? 'bg-[#14170F] text-[#F4F1E9] border-[#14170F]'
+                                : 'bg-[#E4DCC6]/60 text-[#14170F] border-[#14170F]/15 hover:bg-[#E4DCC6]'
+                            }`}
+                          >
+                            {zone.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      <div>
+                        <label className="text-xs font-mono font-bold text-[#14170F] block mb-1">
+                          Building / Hostel:
+                        </label>
+                        <input
+                          type="text"
+                          value={campusPreset}
+                          onChange={(e) => setCampusPreset(e.target.value)}
+                          placeholder="e.g. Boys Hostel BH-4"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#14170F]/20 bg-white text-sm outline-none focus:border-[#2F4E3A]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-mono font-bold text-[#14170F] block mb-1">
+                          Room / Lab / Wing:
+                        </label>
+                        <input
+                          type="text"
+                          value={specificLocation}
+                          onChange={(e) => setSpecificLocation(e.target.value)}
+                          placeholder="e.g. Room 312, 3rd Floor"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#14170F]/20 bg-white text-sm outline-none focus:border-[#2F4E3A]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Time Window Cards */}
+                    <div className="pt-4 border-t border-[#14170F]/10 space-y-3">
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#14170F]/70 block">
+                        Select Collection Window:
+                      </span>
+                      <div className="space-y-2">
+                        {TIME_WINDOWS.map((win) => {
+                          const isSelected = preferredWindow === win.id;
+                          return (
+                            <div
+                              key={win.id}
+                              onClick={() => setPreferredWindow(win.id)}
+                              className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition ${
+                                isSelected
+                                  ? 'border-[#2F4E3A] bg-[#2F4E3A]/8 ring-1 ring-[#2F4E3A]'
+                                  : 'border-[#14170F]/15 bg-white hover:border-[#14170F]/30'
+                              }`}
+                            >
+                              <div>
+                                <span className="font-serif font-bold text-sm text-[#14170F] block">
+                                  {win.label}
+                                </span>
+                                <span className="text-xs text-[#14170F]/65">{win.desc}</span>
+                              </div>
+                              <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                  isSelected ? 'bg-[#2F4E3A] border-[#2F4E3A] text-white' : 'border-[#14170F]/30'
+                                }`}
+                              >
+                                {isSelected && <Check size={10} />}
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(1)}
-                      className="text-xs text-[var(--copper)] hover:underline shrink-0"
-                    >
-                      Edit
-                    </button>
                   </div>
+                )}
 
-                  {/* Section 2: Quantity & Estimated Impact */}
-                  <div className="py-3.5 flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--ink)]/50">
-                        Quantity & Estimated Diversion
-                      </p>
-                      <p className="text-sm font-semibold text-[var(--ink)]">{quantity}</p>
-                      <p className="text-xs text-[var(--moss)] font-medium">
-                        ~{estimatedImpact.kg} kg e-waste diverted · ~{estimatedImpact.co2Kg} kg CO₂e prevented
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(2)}
-                      className="text-xs text-[var(--copper)] hover:underline shrink-0"
-                    >
-                      Edit
-                    </button>
-                  </div>
-
-                  {/* Section 3: Campus Location & Scheduled Window */}
-                  <div className="py-3.5 flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--ink)]/50">
-                        Collection Location & Window
-                      </p>
-                      <p className="text-sm font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                        <MapPin size={13} className="text-[var(--copper)] shrink-0" />
-                        {fullAddress}
-                      </p>
-                      <p className="text-xs text-[var(--ink)]/60 flex items-center gap-1.5">
-                        <Clock size={13} className="text-[var(--moss)] shrink-0" />
-                        {preferredWindow}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(3)}
-                      className="text-xs text-[var(--copper)] hover:underline shrink-0"
-                    >
-                      Edit
-                    </button>
-                  </div>
-
-                  {/* Section 4: Contact */}
-                  <div className="py-3.5 flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--ink)]/50">
-                        Contact Person
-                      </p>
-                      <p className="text-sm font-semibold text-[var(--ink)]">{contactName}</p>
-                      <p className="text-xs text-[var(--ink)]/65">
-                        {contactEmail} · {contactPhone}
-                      </p>
-                      {hasDamagedBattery && (
-                        <p className="text-xs font-semibold text-[var(--rust)] flex items-center gap-1 mt-1">
-                          <AlertTriangle size={12} /> Includes swollen / damaged battery alert
+                {/* ── Step 4: Contact Information ── */}
+                {currentStep === 4 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <h3 className="text-xl font-serif font-bold text-[#14170F]">
+                          Student Contact Verification
+                        </h3>
+                        <p className="text-xs text-[#14170F]/70 mt-1">
+                          The collector will call or SMS upon arrival outside your hostel gate.
                         </p>
-                      )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleFillDemo}
+                        className="btn-3d-copper px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <Sparkles size={13} />
+                        <span>Fill Demo Student (Arjun Sharma)</span>
+                      </button>
                     </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-mono font-bold text-[#14170F] block mb-1">
+                          Full Name:
+                        </label>
+                        <input
+                          type="text"
+                          value={contactName}
+                          onChange={(e) => setContactName(e.target.value)}
+                          placeholder="Arjun Sharma"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#14170F]/20 bg-white text-sm outline-none focus:border-[#2F4E3A]"
+                        />
+                        {errors.name && <p className="text-xs font-mono text-[#9B4A3E] mt-1">{errors.name}</p>}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-mono font-bold text-[#14170F] block mb-1">
+                            LPU Email Address:
+                          </label>
+                          <input
+                            type="email"
+                            value={contactEmail}
+                            onChange={(e) => setContactEmail(e.target.value)}
+                            placeholder="arjun.sharma@lpu.in"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#14170F]/20 bg-white text-sm outline-none focus:border-[#2F4E3A]"
+                          />
+                          {errors.email && <p className="text-xs font-mono text-[#9B4A3E] mt-1">{errors.email}</p>}
+                        </div>
+                        <div>
+                          <label className="text-xs font-mono font-bold text-[#14170F] block mb-1">
+                            Mobile Phone (10 digits):
+                          </label>
+                          <input
+                            type="tel"
+                            value={contactPhone}
+                            onChange={(e) => setContactPhone(e.target.value)}
+                            placeholder="9876543210"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#14170F]/20 bg-white text-sm outline-none focus:border-[#2F4E3A]"
+                          />
+                          {errors.phone && <p className="text-xs font-mono text-[#9B4A3E] mt-1">{errors.phone}</p>}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-mono font-bold text-[#14170F] block mb-1">
+                          Special Instructions / Specific Gate Note:
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          placeholder="e.g. Call when outside Gate 2, items packed in cardboard box."
+                          className="w-full px-3.5 py-2 rounded-xl border border-[#14170F]/20 bg-white text-sm outline-none focus:border-[#2F4E3A]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Step 5: Review & Submit ── */}
+                {currentStep === 5 && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-serif font-bold text-[#14170F]">
+                        Review Collection Manifest
+                      </h3>
+                      <p className="text-xs text-[#14170F]/70 mt-1">
+                        Please confirm your dispatch details before generating your campus tracking boarding pass.
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-xl bg-white border border-[#14170F]/15 space-y-3 text-xs font-mono">
+                      <div className="flex justify-between py-1 border-b border-[#14170F]/10">
+                        <span className="opacity-60">Categories:</span>
+                        <span className="font-bold text-[#14170F] font-sans">
+                          {selectedCategories.map((s) => CATEGORY_CONFIGS.find((c) => c.slug === s)?.name).join(', ')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-[#14170F]/10">
+                        <span className="opacity-60">Quantity Tier:</span>
+                        <span className="font-bold text-[#14170F]">{quantity}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-[#14170F]/10">
+                        <span className="opacity-60">Campus Location:</span>
+                        <span className="font-bold text-[#14170F] font-sans">{fullAddress}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-[#14170F]/10">
+                        <span className="opacity-60">Collection Window:</span>
+                        <span className="font-bold text-[#14170F]">{preferredWindow}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="opacity-60">Contact:</span>
+                        <span className="font-bold text-[#14170F]">{contactName} ({contactEmail} • {contactPhone})</span>
+                      </div>
+                    </div>
+
+                    {submissionError && (
+                      <div className="p-4 rounded-xl border border-[#9B4A3E]/30 bg-[#9B4A3E]/10 text-xs font-mono text-[#9B4A3E] flex items-center gap-2">
+                        <AlertTriangle size={16} /> {submissionError}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="mt-8 pt-6 border-t border-[#14170F]/10 flex items-center justify-between">
+                  {currentStep > 1 ? (
                     <button
                       type="button"
-                      onClick={() => setCurrentStep(4)}
-                      className="text-xs text-[var(--copper)] hover:underline shrink-0"
+                      onClick={handleBack}
+                      className="px-4 py-2.5 rounded-xl text-xs font-mono font-semibold border border-[#14170F]/20 text-[#14170F] hover:bg-[#E4DCC6] transition cursor-pointer inline-flex items-center gap-1.5"
                     >
-                      Edit
+                      <ArrowLeft size={13} /> Back
                     </button>
-                  </div>
-
-                </div>
-
-                {/* Protocol safety notice */}
-                <div className="p-4 rounded-xl bg-[var(--sand)]/40 border border-[var(--sand)] space-y-1">
-                  <h4 className="text-xs font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <ShieldCheck size={14} className="text-[var(--moss)]" />
-                    Handover Preparation Checklist Reminder
-                  </h4>
-                  <p className="text-[11px] text-[var(--ink)]/60 leading-relaxed">
-                    Remember to factory-reset phones and laptops, remove SIM/SD cards, and tape loose battery terminals before handover.
-                  </p>
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  disabled={isSubmitting}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium bg-[var(--sand)]/60 text-[var(--ink)] hover:bg-[var(--sand)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                >
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-semibold bg-[var(--moss)] text-[var(--paper)] hover:bg-[#253e2e] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md ml-auto disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Submitting Request…
-                    </>
                   ) : (
-                    <>
-                      <Truck size={16} /> Confirm & Request Collection
-                    </>
+                    <span />
                   )}
-                </button>
-              </div>
-            </motion.div>
-          )}
 
-          {/* ─────────────────────────────────────────────────────────── */}
-          {/* STEP 6: Success Confirmation Screen                         */}
-          {/* ─────────────────────────────────────────────────────────── */}
-          {currentStep === 6 && submittedData && (
-            <motion.div
-              key="step-6"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-              className="space-y-6"
-            >
-              <div className="p-8 sm:p-10 rounded-2xl bg-[var(--paper)] border border-[var(--sand)] shadow-md text-center space-y-6">
-
-                {/* Animated Green Badge */}
-                <div className="w-16 h-16 rounded-full bg-[var(--moss)]/15 text-[var(--moss)] flex items-center justify-center mx-auto ring-8 ring-[var(--moss)]/10">
-                  <CheckCircle2 size={36} />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--copper)]/10 text-[var(--copper)] border border-[var(--copper)]/20 mb-1">
-                    Sample data
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--ink)]">
-                    Collection Request Scheduled!
-                  </h2>
-                  <p className="text-sm text-[var(--ink)]/65 max-w-lg mx-auto">
-                    Your campus pickup request has been recorded. Our collection team visiting {campusPreset} has received your details.
-                  </p>
-                </div>
-
-                {/* Tracking ID Callout */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[var(--sand)]/40 border border-[var(--sand)] max-w-md mx-auto space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink)]/50">
-                    Your Tracking Reference
-                  </p>
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-xl sm:text-2xl font-mono font-bold text-[var(--ink)] tracking-wider">
-                      {submittedData.trackingId}
-                    </span>
+                  {currentStep < 5 ? (
                     <button
                       type="button"
-                      onClick={handleCopyId}
-                      className="p-1.5 rounded-lg bg-[var(--paper)] hover:bg-[var(--sand)] text-[var(--ink)]/70 hover:text-[var(--ink)] transition-colors border border-[var(--sand)]"
-                      title="Copy Tracking ID"
+                      onClick={handleNext}
+                      className="btn-3d-moss px-5 py-2.5 rounded-xl text-xs font-semibold inline-flex items-center gap-2 cursor-pointer"
                     >
-                      {copied ? <Check size={16} className="text-[var(--moss)]" /> : <Copy size={16} />}
+                      <span>Continue to {STEPS[currentStep].name}</span>
+                      <ArrowRight size={14} />
                     </button>
-                  </div>
-                  {copied && (
-                    <p className="text-[11px] text-[var(--moss)] font-medium">Copied to clipboard!</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      className="btn-3d-copper px-6 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <span>{isSubmitting ? 'Confirming Dispatch...' : 'Generate Dispatch Boarding Pass'}</span>
+                      <CheckCircle2 size={16} />
+                    </button>
                   )}
                 </div>
-
-                {/* Impact Metrics Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto text-left">
-                  <div className="p-4 rounded-xl bg-[var(--moss)]/8 border border-[var(--moss)]/20 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--moss)]">
-                      <Scale size={14} /> Estimated Impact (Sample data)
-                    </div>
-                    <p className="text-xl font-bold text-[var(--ink)]">
-                      ~{submittedData.estimatedImpactKg} kg
-                    </p>
-                    <p className="text-[11px] text-[var(--ink)]/55">
-                      Diverted from landfills (GEM 2024 estimate)
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-[var(--copper)]/8 border border-[var(--copper)]/20 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--copper)]">
-                      <ShieldCheck size={14} /> Carbon Offset (Sample)
-                    </div>
-                    <p className="text-xl font-bold text-[var(--ink)]">
-                      ~{Math.round(submittedData.estimatedImpactKg * 1.5 * 10) / 10} kg CO₂e
-                    </p>
-                    <p className="text-[11px] text-[var(--ink)]/55">
-                      Mineral extraction emissions avoided
-                    </p>
-                  </div>
-                </div>
-
-                {/* Handover Details Summary */}
-                <div className="p-4 rounded-xl bg-[var(--sand)]/20 border border-[var(--sand)] max-w-lg mx-auto text-left space-y-2 text-xs">
-                  <p className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <MapPin size={13} className="text-[var(--copper)]" />
-                    Pickup Location: <span className="font-normal text-[var(--ink)]/75">{fullAddress}</span>
-                  </p>
-                  <p className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <Clock size={13} className="text-[var(--moss)]" />
-                    Scheduled Window: <span className="font-normal text-[var(--ink)]/75">{preferredWindow}</span>
-                  </p>
-                  <p className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <User size={13} className="text-[var(--ink)]/50" />
-                    Contact: <span className="font-normal text-[var(--ink)]/75">{contactName} ({contactPhone})</span>
-                  </p>
-                </div>
-
-                {/* Next Steps Timeline */}
-                <div className="p-5 rounded-xl bg-[var(--sand)]/40 border border-[var(--sand)] max-w-lg mx-auto text-left space-y-3">
-                  <h4 className="text-xs font-semibold text-[var(--ink)] uppercase tracking-wider">
-                    What happens next?
-                  </h4>
-                  <div className="space-y-2.5 text-xs text-[var(--ink)]/70">
-                    <div className="flex items-start gap-2.5">
-                      <span className="w-5 h-5 rounded-full bg-[var(--moss)] text-[var(--paper)] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                        1
-                      </span>
-                      <p>
-                        Keep your items boxed or bagged near your room or lobby before the scheduled window.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2.5">
-                      <span className="w-5 h-5 rounded-full bg-[var(--moss)] text-[var(--paper)] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                        2
-                      </span>
-                      <p>
-                        Our collector will call <strong>{contactPhone}</strong> upon arriving at {campusPreset}.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2.5">
-                      <span className="w-5 h-5 rounded-full bg-[var(--moss)] text-[var(--paper)] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                        3
-                      </span>
-                      <p>
-                        Items are weighed and transported to an authorized recycler in the Phagwara/Jalandhar cluster.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCurrentStep(1);
-                      setSubmittedData(null);
-                      setSelectedCategories(['mobiles-accessories']);
-                      setQuantity('3–5 items (light)');
-                      setCampusPreset('Boys Hostel BH-4');
-                      setSpecificLocation('');
-                      setContactName('');
-                      setContactEmail('');
-                      setContactPhone('');
-                      setHasDamagedBattery(false);
-                      setNotes('');
-                    }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium bg-[var(--sand)]/70 text-[var(--ink)] hover:bg-[var(--sand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    Schedule Another Collection
-                  </button>
-                  <Link
-                    to={`/dashboard?email=${encodeURIComponent(contactEmail)}`}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-semibold bg-[var(--moss)] text-[var(--paper)] hover:bg-[#253e2e] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm"
-                  >
-                    Track in Dashboard →
-                  </Link>
-                  <Link
-                    to="/centers"
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium bg-[var(--copper)]/10 text-[var(--copper)] hover:bg-[var(--copper)]/20 border border-[var(--copper)]/25 transition-all"
-                  >
-                    <MapPin size={13} /> Campus Drop-offs
-                  </Link>
-                </div>
-
               </div>
-            </motion.div>
-          )}
+            </div>
 
-        </AnimatePresence>
+            {/* ── Right 4 Columns: Live Impact Telemetry & Manifest Receipt ── */}
+            <div className="lg:col-span-4 lg:sticky lg:top-28 space-y-6">
+              <div className="rounded-2xl p-6 bg-[#14170F] text-[#F4F1E9] border-2 border-[#B5652D]/50 shadow-[0_12px_0_0_#2F4E3A,0_25px_50px_rgba(20,23,15,0.25)] space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-[#F4F1E9]/15">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#6B8F71] animate-ping" />
+                    <span className="text-xs font-mono font-bold tracking-widest text-[#B5652D] uppercase">
+                      LIVE IMPACT TELEMETRY // UN GEM 2024
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-[#F4F1E9]/50">LPU v2.6</span>
+                </div>
 
+                {/* 3 Live Animated Gauges */}
+                <div className="space-y-4">
+                  {/* Gauge 1: Estimated Mass */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-[#F4F1E9]/70">Diverted E-Waste Mass:</span>
+                      <span className="font-bold text-lg text-[#F4F1E9]">
+                        {telemetry.massKg.toFixed(2)} kg
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-[#F4F1E9]/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#2F4E3A] via-[#6B8F71] to-[#B5652D] transition-all duration-300"
+                        style={{ width: `${Math.min(100, (telemetry.massKg / 20) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Gauge 2: CO2e Emissions Avoided */}
+                  <div className="p-3 rounded-xl bg-[#F4F1E9]/5 border border-[#F4F1E9]/10 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-mono text-[#6B8F71] uppercase tracking-wider block">
+                        CO₂e Emissions Avoided
+                      </span>
+                      <span className="text-xl font-serif font-bold text-[#F4F1E9]">
+                        {telemetry.co2eKg.toFixed(2)} kg
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#F4F1E9]/50 text-right">
+                      1.44 kg CO₂e<br />per kg e-waste
+                    </span>
+                  </div>
+
+                  {/* Gauge 3: Toxic Heavy Metals Diverted */}
+                  <div className="p-3 rounded-xl bg-[#F4F1E9]/5 border border-[#F4F1E9]/10 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-mono text-[#B5652D] uppercase tracking-wider block">
+                        Toxic Metals Diverted
+                      </span>
+                      <span className="text-xl font-serif font-bold text-[#F4F1E9]">
+                        {telemetry.toxicGrams.toFixed(1)} g
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#F4F1E9]/50 text-right">
+                      Lead, Mercury &amp;<br />Cadmium kept safe
+                    </span>
+                  </div>
+                </div>
+
+                {/* Live Dispatch Manifest Summary */}
+                <div className="pt-4 border-t border-[#F4F1E9]/15 space-y-3">
+                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-[#F4F1E9]/60 block">
+                    Current Manifest Configuration:
+                  </span>
+
+                  <div className="space-y-1.5 text-xs font-mono">
+                    <div className="flex justify-between text-[#F4F1E9]/80">
+                      <span>Categories:</span>
+                      <span className="font-bold text-[#B5652D]">{selectedCategories.length} selected</span>
+                    </div>
+                    <div className="flex justify-between text-[#F4F1E9]/80">
+                      <span>Location:</span>
+                      <span className="font-bold truncate max-w-[170px] text-right">{campusPreset}</span>
+                    </div>
+                    <div className="flex justify-between text-[#F4F1E9]/80">
+                      <span>Window:</span>
+                      <span className="font-bold truncate max-w-[170px] text-right">{preferredWindow.split('—')[0]}</span>
+                    </div>
+                  </div>
+
+                  {/* Readiness Meter */}
+                  <div className="pt-2">
+                    <div className="flex justify-between text-[11px] font-mono mb-1">
+                      <span className="text-[#6B8F71]">Readiness Status</span>
+                      <span className="font-bold">Step {currentStep} of 5</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-[#F4F1E9]/15 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#6B8F71] transition-all duration-300"
+                        style={{ width: `${(currentStep / 5) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
