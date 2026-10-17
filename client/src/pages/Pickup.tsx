@@ -160,7 +160,13 @@ export default function Pickup() {
     }
   }, [initialCategory]);
 
-  // Compute estimated weight and CO2 impact in real-time
+  // ── Environmental Impact Calculation Formula & Assumptions (GEM 2024) ────────
+  // Base unit weights from United Nations Global E-waste Monitor (GEM 2024):
+  // - IT Equipment: 4.5 kg | Mobiles: 1.2 kg | Batteries: 0.5 kg | Large: 30.0 kg
+  // - Small Appliances: 2.0 kg | Lighting: 0.3 kg | Cables & Peripherals: 1.0 kg
+  // Multipliers estimate quantity scale based on user selection.
+  // CO2 factor: 1 kg e-waste diverted avoids ~1.5 kg CO2e in virgin mineral extraction.
+  // Note: All impact figures are displayed as "Estimated impact (Sample data)".
   const estimatedImpact = useMemo(() => {
     const baseWeights: Record<string, number> = {
       'it-equipment': 4.5,
@@ -228,8 +234,8 @@ export default function Pickup() {
         newErrors.contactEmail = 'Please enter a valid email address (e.g. name@lpu.in).';
       }
       const cleanPhone = contactPhone.replace(/\D/g, '');
-      if (!cleanPhone || cleanPhone.length < 7) {
-        newErrors.contactPhone = 'Please enter a valid phone number (at least 7 digits).';
+      if (!/^\d{10}$/.test(cleanPhone)) {
+        newErrors.contactPhone = 'Please enter a valid 10-digit mobile number.';
       }
     }
 
@@ -332,13 +338,13 @@ export default function Pickup() {
         {/* ── Progress Indicators Bar (Steps 1 to 5) ───────────────────── */}
         {currentStep <= 5 && (
           <Reveal delay={0.05}>
-            <div className="mb-10 p-4 sm:p-5 rounded-2xl backdrop-blur-xl bg-white/80 border border-[var(--sand)] shadow-lg shadow-[var(--moss)]/5 relative">
+            <div className="mb-10 p-4 sm:p-5 rounded-xl bg-[var(--paper)] border border-[var(--sand)] relative">
               <div className="relative flex items-center justify-between">
                 {/* Connecting background line */}
                 <div className="absolute top-1/2 left-4 right-4 -translate-y-1/2 h-1 bg-[var(--sand)]/60 rounded-full -z-0" />
                 {/* Connecting active filled line */}
                 <motion.div
-                  className="absolute top-1/2 left-4 -translate-y-1/2 h-1 rounded-full bg-gradient-to-r from-[var(--moss)] via-[var(--copper)] to-[var(--copper)] -z-0 shadow-[0_0_12px_rgba(181,101,45,0.4)]"
+                  className="absolute top-1/2 left-4 -translate-y-1/2 h-1 rounded-full bg-[var(--moss)] -z-0"
                   initial={false}
                   animate={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 92}%` }}
                   transition={{ type: 'spring', stiffness: 260, damping: 28 }}
@@ -355,14 +361,14 @@ export default function Pickup() {
                     >
                       <motion.div
                         initial={false}
-                        animate={{ scale: isCurrent ? 1.15 : 1 }}
+                        animate={{ scale: isCurrent ? 1.08 : 1 }}
                         transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                         className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
                           isCompleted
-                            ? 'bg-[var(--moss)] text-[var(--paper)] shadow-[0_0_10px_rgba(47,78,58,0.3)] ring-2 ring-[var(--moss)]/30'
+                            ? 'bg-[var(--moss)] text-[var(--paper)]'
                             : isCurrent
-                            ? 'bg-[var(--copper)] text-[var(--paper)] ring-4 ring-[var(--copper)]/30 shadow-[0_0_18px_rgba(181,101,45,0.45)]'
-                            : 'bg-white text-[var(--ink)]/40 border border-[var(--sand)]'
+                            ? 'bg-[var(--copper)] text-[var(--paper)] ring-2 ring-[var(--copper)]/30'
+                            : 'bg-[var(--sand)]/40 text-[var(--ink)]/40 border border-[var(--sand)]'
                         }`}
                       >
                         {isCompleted ? <Check size={14} strokeWidth={2.5} /> : s.id}
@@ -401,7 +407,7 @@ export default function Pickup() {
               transition={{ duration: 0.25 }}
               className="space-y-6"
             >
-              <div className="p-6 sm:p-8 rounded-2xl bg-[var(--paper)] border border-[var(--sand)] shadow-sm space-y-6">
+              <div className="p-6 sm:p-8 rounded-xl bg-[var(--paper)] border border-[var(--sand)] shadow-xs space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-[var(--ink)]">
                     Step 1: What items are you handing in?
@@ -428,10 +434,10 @@ export default function Pickup() {
                       <div
                         key={cat.slug}
                         onClick={() => toggleCategory(cat.slug)}
-                        className={`relative p-4 sm:p-5 rounded-2xl flex flex-col items-center text-center justify-between min-h-[160px] transition-all duration-200 cursor-pointer select-none group ${
+                        className={`relative p-4 sm:p-5 rounded-xl flex flex-col items-center text-center justify-between min-h-[160px] transition-all duration-200 cursor-pointer select-none group ${
                           isSelected
-                            ? 'border-2 border-[var(--copper)] bg-white shadow-[0_0_24px_rgba(181,101,45,0.22)] ring-4 ring-[var(--copper)]/20 scale-[1.03]'
-                            : 'border border-[var(--sand)] bg-white/75 hover:bg-white hover:border-[var(--copper)]/40 hover:scale-105 shadow-xs'
+                            ? 'border-2 border-[var(--copper)] bg-[color-mix(in_srgb,var(--copper)_8%,var(--paper))] shadow-sm scale-[1.01]'
+                            : 'border border-[var(--sand)] bg-[var(--paper)] hover:border-[var(--copper)]/50 hover:bg-[color-mix(in_srgb,var(--sand)_20%,var(--paper))] shadow-xs'
                         }`}
                       >
                         {/* Top-right selection pill indicator */}
@@ -1124,25 +1130,25 @@ export default function Pickup() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto text-left">
                   <div className="p-4 rounded-xl bg-[var(--moss)]/8 border border-[var(--moss)]/20 space-y-1">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--moss)]">
-                      <Scale size={14} /> E-Waste Diversion
+                      <Scale size={14} /> Estimated Impact (Sample data)
                     </div>
                     <p className="text-xl font-bold text-[var(--ink)]">
                       ~{submittedData.estimatedImpactKg} kg
                     </p>
                     <p className="text-[11px] text-[var(--ink)]/55">
-                      Diverted from Phagwara/Jalandhar local landfills
+                      Diverted from landfills (GEM 2024 estimate)
                     </p>
                   </div>
 
                   <div className="p-4 rounded-xl bg-[var(--copper)]/8 border border-[var(--copper)]/20 space-y-1">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--copper)]">
-                      <ShieldCheck size={14} /> Carbon Offset
+                      <ShieldCheck size={14} /> Carbon Offset (Sample)
                     </div>
                     <p className="text-xl font-bold text-[var(--ink)]">
                       ~{Math.round(submittedData.estimatedImpactKg * 1.5 * 10) / 10} kg CO₂e
                     </p>
                     <p className="text-[11px] text-[var(--ink)]/55">
-                      Raw mineral extraction emissions avoided
+                      Mineral extraction emissions avoided
                     </p>
                   </div>
                 </div>
@@ -1203,23 +1209,31 @@ export default function Pickup() {
                     onClick={() => {
                       setCurrentStep(1);
                       setSubmittedData(null);
+                      setSelectedCategories(['mobiles-accessories']);
+                      setQuantity('3–5 items (light)');
+                      setCampusPreset('Boys Hostel BH-4');
                       setSpecificLocation('');
+                      setContactName('');
+                      setContactEmail('');
+                      setContactPhone('');
+                      setHasDamagedBattery(false);
+                      setNotes('');
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium bg-[var(--sand)]/70 text-[var(--ink)] hover:bg-[var(--sand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Schedule Another Collection
                   </button>
                   <Link
-                    to="/centers"
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-medium bg-[var(--moss)] text-[var(--paper)] hover:bg-[#253e2e] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+                    to={`/dashboard?email=${encodeURIComponent(contactEmail)}`}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-semibold bg-[var(--moss)] text-[var(--paper)] hover:bg-[#253e2e] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm"
                   >
-                    <MapPin size={13} /> View Campus Drop-off Centers
+                    Track in Dashboard →
                   </Link>
                   <Link
-                    to="/"
+                    to="/centers"
                     className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium bg-[var(--copper)]/10 text-[var(--copper)] hover:bg-[var(--copper)]/20 border border-[var(--copper)]/25 transition-all"
                   >
-                    Back to Home
+                    <MapPin size={13} /> Campus Drop-offs
                   </Link>
                 </div>
 

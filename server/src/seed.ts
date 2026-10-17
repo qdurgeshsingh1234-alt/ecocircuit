@@ -94,7 +94,7 @@ const centerData = [
 // Using hostel block / department locations — no street addresses.
 const pickupData = [
   {
-    trackingId: 'ECO-2024-001',
+    trackingId: 'ECO-104928',
     categories: ['it-equipment', 'cables-peripherals'],
     quantity: '3–5 items (light)',
     address: 'Boys Hostel BH-6, Room 204, LPU Campus (Sample)',
@@ -106,7 +106,7 @@ const pickupData = [
     estimatedImpactKg: 12.5,
   },
   {
-    trackingId: 'ECO-2024-004',
+    trackingId: 'ECO-839201',
     categories: ['mobiles-accessories', 'batteries'],
     quantity: '1–2 items',
     address: 'Boys Hostel BH-6, Room 204, LPU Campus (Sample)',
@@ -118,7 +118,7 @@ const pickupData = [
     estimatedImpactKg: 6.8,
   },
   {
-    trackingId: 'ECO-2024-005',
+    trackingId: 'ECO-492014',
     categories: ['cables-peripherals', 'small-appliances'],
     quantity: '5+ items (mixed)',
     address: 'Boys Hostel BH-6, Room 204, LPU Campus (Sample)',
@@ -130,7 +130,7 @@ const pickupData = [
     estimatedImpactKg: 18.4,
   },
   {
-    trackingId: 'ECO-2024-002',
+    trackingId: 'ECO-729103',
     categories: ['large-appliances'],
     quantity: '1–2 large items',
     address: 'Department of Computer Science & Engineering, Block 32, LPU Campus (Sample)',
@@ -142,7 +142,7 @@ const pickupData = [
     estimatedImpactKg: 45.0,
   },
   {
-    trackingId: 'ECO-2024-003',
+    trackingId: 'ECO-385019',
     categories: ['batteries', 'mobiles-accessories'],
     quantity: '5+ items (mixed)',
     address: 'Girls Hostel GH-4, Common Room, LPU Campus (Sample)',

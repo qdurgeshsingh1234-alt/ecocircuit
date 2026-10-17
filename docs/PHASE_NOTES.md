@@ -52,5 +52,16 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Navigated to `/centers?category=batteries`, verified that 7 battery collection points rendered with exact distance sorting, validated Google Maps routing URLs and OSM attribution, and captured 1440px desktop and 375px mobile screenshots without console errors.
 5. **Remaining limitations:** Live GPS geolocation requires HTTPS/browser user permission; by default, distance calculation centers on LPU campus center coordinates.
 
+---
+
+## Stage F: Hostel Collection Request Wizard (`/pickup`)
+
+1. **What it does:** Enables LPU students and staff to request scheduled hostel or departmental e-waste collections, validating 10-digit phone numbers and generating a canonical tracking ID (`ECO-XXXXXX`).
+2. **How it works:** Uses a 5-step guided wizard (Categories, Quantity, Campus Location, Contact, Review) with real-time environmental impact calculations grounded in GEM 2024 baseline unit weights; submits via `POST /api/pickups`; renders a confirmation screen with one-click clipboard copy and deep links to `/dashboard?email=...`.
+3. **Important files:** `client/src/pages/Pickup.tsx` (multi-step wizard, impact estimator, confirmation state), `server/src/routes/pickups.ts` (validation schema, impact formulas with documented assumptions, `ECO-XXXXXX` generator), `server/src/seed.ts` (sample pickups).
+4. **How it was tested:** Walked through the live browser flow across all 5 wizard steps, submitted a test request with valid 10-digit phone number, verified the HTTP 201 response, validated that the generated tracking ID matched `/^ECO-[A-Z0-9]{6}$/`, and captured desktop (1440px initial & confirmation) and mobile (375px) screenshots.
+5. **Remaining limitations:** SMS confirmation gateway integration is simulated; confirmation details are delivered in-app on the final screen and queryable via dashboard.
+
+
 
 

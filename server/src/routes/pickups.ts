@@ -5,6 +5,17 @@ import { Pickup } from '../models/Pickup';
 
 const router = Router();
 
+// ── Environmental Impact Calculation Formula & Assumptions ──────────────────
+// Based on United Nations Global E-waste Monitor (GEM 2024) average unit weights:
+// - IT Equipment: ~4.5 kg (laptops ~2.2 kg, monitors ~4.5 kg)
+// - Large Appliances: ~30.0 kg (microwaves, mini-coolers)
+// - Small Appliances: ~2.0 kg (kettles, irons, hairdryers)
+// - Batteries: ~0.5 kg (lithium-ion and alkaline packs)
+// - Lighting: ~0.3 kg (CFLs, LED tubes)
+// - Cables & Peripherals: ~1.0 kg (chargers, mice, keyboards)
+// - Mobiles & Accessories: ~1.2 kg (phones ~0.18 kg + powerbanks/accessories)
+// Multipliers estimate volume based on user-selected bucket.
+// Note: Labeled in UI as "Estimated impact (Sample data)".
 const CATEGORY_WEIGHT_KG: Record<string, number> = {
   'IT Equipment': 4.5,
   'Large Appliances': 30.0,
@@ -37,6 +48,16 @@ function calculateImpactKg(categories: string[], quantity: string): number {
   return Math.round(categoryWeight * multiplier * 10) / 10;
 }
 
+// Generate canonical ECO-XXXXXX tracking ID (6 uppercase alphanumeric chars)
+function generateTrackingId(): string {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `ECO-${code}`;
+}
+
 const CreatePickupSchema = z.object({
   categories: z.array(z.string()).min(1, 'Select at least one category'),
   quantity: z.string().min(1, 'Quantity is required'),
@@ -59,7 +80,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const data = parsed.data;
-    const trackingId = `ECO-${new Date().getFullYear()}-${nanoid(6).toUpperCase()}`;
+    const trackingId = generateTrackingId();
     const estimatedImpactKg = calculateImpactKg(data.categories, data.quantity);
 
     const pickup = new Pickup({
