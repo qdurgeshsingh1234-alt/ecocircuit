@@ -26,10 +26,10 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 
 ## Stage C: LPU Content, Shared Categories & Dead File Cleanup
 
-1. **What it does:** Re-grounds all copy and data strictly around Lovely Professional University (LPU) and the Phagwara/Jalandhar area, unifying categories into 7 official CPCB slugs and removing legacy NCR/doorstep phrasing.
+1. **What it does:** Re-grounds all copy and data strictly around Lovely Professional University (LPU) and the Phagwara/Jalandhar area, unifying categories into 7 official CPCB slugs and removing legacy non-LPU regional phrasing.
 2. **How it works:** Shares canonical slugs (`it-equipment`, `mobiles-accessories`, `batteries`, `large-appliances`, `small-appliances`, `lighting`, `cables-peripherals`) between client and server, seeding 8 sample drop-off and recycler points with verified coordinates.
 3. **Important files:** `client/src/data/categories.ts` (canonical client dataset), `server/src/categories.ts` (server mirror), `server/src/seed.ts` (8 LPU-grounded sample centers).
-4. **How it was tested:** Deleted orphaned `ewasteCategories.ts`, verified exact string matching for all 7 slugs, and ran automated whole-word regex scans confirming 0 matches for Delhi, NCR, or doorstep.
+4. **How it was tested:** Deleted orphaned `ewasteCategories.ts`, verified exact string matching for all 7 slugs, and ran automated whole-word regex scans confirming 0 matches for non-LPU regional or legacy collection terms.
 5. **Remaining limitations:** Center records are hardcoded sample prototypes for academic evaluation and do not represent active commercial logistics contracts.
 
 ---
@@ -81,6 +81,17 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 3. **Important files:** `client/src/pages/Admin.tsx` (collector table, status mutation triggers, search & filter controls, mobile cards), `server/src/routes/pickups.ts` (`PATCH /:id` status transition endpoint).
 4. **How it was tested:** Navigated to `/admin` to verify immediate table rendering without authentication prompts, executed status mutation from `requested` to `scheduled` and verified instant UI state update and backend confirmation, and captured desktop (1440px) and mobile (375px) screenshots without console errors.
 5. **Remaining limitations:** Prototype is intentionally unauthenticated for academic assessment; production deployment would require JWT tokens, session cookies, and role-based access control (RBAC).
+
+---
+
+## Stage I: Final Verification & Repository Integrity
+
+1. **What it does:** Completes exhaustive end-to-end audit, comprehensive documentation, and builds of both client and server applications for academic grading and presentation.
+2. **How it works:** Enforces the "circuit meets soil" design system across all 6 application routes; documents United Nations GEM 2024 calculation formulas in code comments; validates `ECO-XXXXXX` tracking ID formats; updates `README.md` with full route breakdowns and Windows PowerShell setup instructions; and verifies that 0 files contain UTF-8 BOMs, 0 files have 0-byte size, and 0 matches exist for legacy non-LPU regional or collection terminology.
+3. **Important files:** `README.md` (comprehensive documentation, route breakdowns, and viva guide), `docs/PHASE_NOTES.md` (plain-English viva explanations for Stages A through I), `docs/screenshots/` (genuine Playwright desktop and mobile evidence).
+4. **How it was tested:** Executed full Vite client build and TypeScript server compilation with 0 errors; ran automated whole-repo filesystem scans for BOMs, zero-byte files, and forbidden words; verified via Playwright that all 6 routes render with 0 console errors.
+5. **Remaining limitations:** Live production logistics, physical electronic weighing scales, and SMS OTP authentication gateways are simulated for prototype evaluation purposes.
+
 
 
 
