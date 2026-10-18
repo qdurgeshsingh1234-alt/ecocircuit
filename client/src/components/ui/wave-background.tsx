@@ -116,11 +116,13 @@ export function Waves({
       m.glowX += (m.x - m.glowX) * 0.85;
       m.glowY += (m.y - m.glowY) * 0.85;
 
+      const isDark = variant === 'dark';
+
       // Soft ambient proximity spotlight at cursor
       if (m.glowX > -200 && m.glowX < rect.width + 200) {
-        const grad = ctx.createRadialGradient(m.glowX, m.glowY, 0, m.glowX, m.glowY, 260);
-        grad.addColorStop(0, 'rgba(181, 101, 45, 0.08)');
-        grad.addColorStop(0.45, 'rgba(107, 143, 113, 0.035)');
+        const grad = ctx.createRadialGradient(m.glowX, m.glowY, 0, m.glowX, m.glowY, 280);
+        grad.addColorStop(0, isDark ? 'rgba(217, 119, 54, 0.22)' : 'rgba(181, 101, 45, 0.08)');
+        grad.addColorStop(0.45, isDark ? 'rgba(107, 143, 113, 0.12)' : 'rgba(107, 143, 113, 0.035)');
         grad.addColorStop(1, 'transparent');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, rect.width, rect.height);
@@ -129,10 +131,9 @@ export function Waves({
       const noise = noiseRef.current;
       const t = time * 0.00035;
       const lines = gridRef.current;
-      const isDark = variant === 'dark';
 
       // Base line stroke color
-      const baseAlpha = 0.045;
+      const baseAlpha = isDark ? 0.08 : 0.045;
       const baseColor = isDark
         ? `rgba(244, 241, 233, ${baseAlpha})`
         : `rgba(20, 23, 15, ${baseAlpha})`;
@@ -154,7 +155,7 @@ export function Waves({
           const dy = p.y - m.sy;
           const d = Math.hypot(dx, dy);
           if (d < 240 && d > 0) {
-            const force = (1 - d / 240) * 12;
+            const force = (1 - d / 240) * 14;
             p.wave.x += (dx / d) * force;
             p.wave.y += (dy / d) * force;
           }
@@ -180,23 +181,23 @@ export function Waves({
 
           if (dist < 240) {
             const prox = 1 - dist / 240;
-            const boostAlpha = baseAlpha + prox * 0.14;
-            // Warm copper for even lines, emerald for odd lines
+            const boostAlpha = baseAlpha + prox * (isDark ? 0.28 : 0.14);
+            // Warm copper for even lines, emerald/signal for odd lines
             ctx.strokeStyle =
               i % 2 === 0
-                ? `rgba(181, 101, 45, ${boostAlpha})`
-                : `rgba(47, 78, 58, ${boostAlpha})`;
-            ctx.lineWidth = 0.75 + prox * 0.4;
+                ? (isDark ? `rgba(217, 119, 54, ${boostAlpha})` : `rgba(181, 101, 45, ${boostAlpha})`)
+                : (isDark ? `rgba(107, 143, 113, ${boostAlpha})` : `rgba(47, 78, 58, ${boostAlpha})`);
+            ctx.lineWidth = 0.75 + prox * 0.5;
             ctx.stroke();
 
             // Micro-circuit node illumination along every 5th vertex inside cursor proximity
             if (j % 5 === 0) {
               ctx.beginPath();
-              ctx.arc(x1, y1, 1.5, 0, Math.PI * 2);
+              ctx.arc(x1, y1, isDark ? 2.0 : 1.5, 0, Math.PI * 2);
               ctx.fillStyle =
                 i % 2 === 0
-                  ? `rgba(181, 101, 45, ${prox * 0.45})`
-                  : `rgba(107, 143, 113, ${prox * 0.45})`;
+                  ? (isDark ? `rgba(217, 119, 54, ${prox * 0.75})` : `rgba(181, 101, 45, ${prox * 0.45})`)
+                  : (isDark ? `rgba(107, 143, 113, ${prox * 0.75})` : `rgba(107, 143, 113, ${prox * 0.45})`);
               ctx.fill();
             }
           } else {

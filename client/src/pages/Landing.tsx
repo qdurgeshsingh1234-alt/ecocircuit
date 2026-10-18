@@ -124,8 +124,7 @@ export default function Landing() {
         >
           {/* Waves living topographic ripple in hero background */}
           <Waves
-            className="absolute inset-0 z-0 opacity-45 pointer-events-none"
-            strokeColor="rgba(181, 101, 45, 0.22)"
+            className="absolute inset-0 z-[4] pointer-events-none"
             variant="dark"
             backgroundColor="transparent"
           />
@@ -258,7 +257,7 @@ export default function Landing() {
       </section>
 
       {/* ── Action cards ── */}
-      <section className="section-pad relative bg-[#F4F1E9]/88 backdrop-blur-[1px] border-b border-[#14170F]/10">
+      <section className="section-pad relative bg-transparent border-b border-[#14170F]/10">
         <div className="max-w-content mx-auto px-4 md:px-6">
           <SectionHeading
             eyebrow="Take action"
@@ -326,7 +325,7 @@ export default function Landing() {
       </section>
 
       {/* ── How it works timeline ── */}
-      <section className="section-pad relative bg-[#EFECE2]/90 backdrop-blur-[1px] border-b border-[#14170F]/10">
+      <section className="section-pad relative bg-transparent border-b border-[#14170F]/10">
         <div className="max-w-content mx-auto px-4 md:px-6">
           <SectionHeading
             eyebrow="The process"
@@ -339,7 +338,7 @@ export default function Landing() {
       </section>
 
       {/* ── Impact section ── */}
-      <section className="section-pad relative bg-[#F4F1E9]/88 backdrop-blur-[1px] border-b border-[#14170F]/10">
+      <section className="section-pad relative bg-transparent border-b border-[#14170F]/10">
         <div className="max-w-content mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <Reveal direction="left">
