@@ -137,6 +137,31 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Built client production bundle with `npm --prefix client run build` confirming 0 TypeScript errors; verified with Playwright across `/`, `/pickup`, `/admin`, and `/dashboard` at 1440px desktop; tested interactive status transition via the 3-state switcher; confirmed 0 console errors; verified repository BOM and zero-byte cleanliness; and captured full-resolution screenshots in `docs/screenshots/stage_l_*.png`.
 5. **Remaining limitations:** Physical scale readings, real-time collector GPS tricycles, and live SMS gateways remain simulated for academic demonstration.
 
+---
+
+## Stage M: Submerged Silk-Circuit Wave Redesign & Landing Page Contrast Overhaul
+
+1. **What it does:** Solves visual contrast and canvas edge artifacts by overhauling the interactive background into a high-performance Canvas 2D submerged "silk-circuit" mesh, feathering the hero laptop canvas with an elliptical radial mask and studio ambient glow, guaranteeing 100% dark-on-light contrast across below-the-fold content, redesigning "How EcoCircuit Works" into a 4-column editorial tactile card grid (`01`–`04`), and resolving 375px mobile hero spacing.
+2. **How it works:**
+   - **Submerged Silk-Circuit Canvas (`wave-background.tsx`):**
+     - Replaces heavy SVG paths with a High-DPI Canvas 2D engine running locked at 60fps.
+     - Spaced horizontal silk ribbons (`xGap = 40`, `yGap = 22`) with low spatial simplex-noise frequency (`0.0012`) and delicate stroke (`lineWidth = 0.75`, `alpha = 0.045`).
+     - Instant magnetic mouse response (`0.65` wave displacement lerp, `0.85` glow lerp) eliminating lag; removes the solid orange pointer dot in favor of an ambient radial proximity spotlight (`260px`).
+     - Dynamically brightens lines (`alpha` up to `0.18`) with alternating Copper (`#B5652D`) and Moss (`#2F4E3A`) strokes and illuminates `1.5px` micro-circuit nodes along every 5th vertex inside cursor proximity.
+   - **Hero Canvas Feathering & High Contrast Text (`ScrollCanvasAnimation.tsx` & `Landing.tsx`):**
+     - Embeds a studio ambient glow (`[radial-gradient(ellipse_at_center,rgba(181,101,45,0.2)_0%,rgba(47,78,58,0.14)_45%,rgba(20,23,15,0)_75%)]`) behind the teardown animation.
+     - Applies an elliptical radial CSS mask (`mask-image: radial-gradient(ellipse 48% 56% at 50% 50%, rgba(0,0,0,1) 28%, rgba(0,0,0,0.8) 45%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 70%)`) to seamlessly feather rectangular frame seams into the `#14170F` background without altering 198-frame scroll scrubbing.
+     - Upgrades hero left typography with explicit `#F4F1E9` headline, `#B5652D` accent, and `#E4DCC6` subheadings/badges.
+   - **Zero Black-on-Black Contrast & 4-Column Editorial Card Grid:**
+     - Scopes dark `#14170F` strictly to Hero sticky container and bottom CTA strip; scopes `GlobalBackground` to `#EFECE2` warm paper so below-the-fold content sections have razor-sharp dark-on-light contrast (`#14170F` Ink text on `#FAF8F3`/`#F4F1E9` paper).
+     - Styles Stats strip as a commanding dark architectural container (`bg-[#14170F] text-[#F4F1E9] border-y border-[#B5652D]/30`) badged `"Sample Campus Projections & Global Context"`.
+     - Rewrites `HowItWorksTimeline.tsx` into a 4-column editorial tactile card grid (`bg-[#FAF8F3]/90 border border-[#14170F]/12 rounded-2xl p-6 shadow-sm card-3d-tactile`) featuring `Fraunces` step numbers `01`–`04`, Lucide icon badges, bold `#14170F` titles, readable descriptions, and direct action links (`Explore Guide →`, `View Map →`, `Book Slot →`, `View Metrics →`).
+     - Adds `pt-24 md:pt-0` mobile top spacing and hides desktop scroll indicators on mobile to prevent navbar and badge overlaps at 375px.
+3. **Important files:** `client/src/components/ui/wave-background.tsx` (Canvas 2D silk-circuit engine), `client/src/components/ScrollCanvasAnimation.tsx` (elliptical radial mask & studio ambient glow), `client/src/App.tsx` (light paper global background), `client/src/pages/Landing.tsx` (contrast architecture & mobile layout), `client/src/components/HowItWorksTimeline.tsx` (4-column editorial card grid).
+4. **How it was tested:** Built client production bundle with `npm --prefix client run build` confirming 0 TypeScript errors; verified with Playwright across `/`, `/guide`, and `/centers` at 1440px desktop and 375px mobile; inspected scroll positions at 0%, 25%, Stats, Action Cards, How It Works grid, Impact, and CTA; verified zero console errors; and saved full-resolution screenshots in `docs/screenshots/silk_waves_*.png`.
+5. **Remaining limitations:** Wave canvas rendering pauses off-screen computation when component unmounts; mobile devices receive responsive touch-drag wave interaction instead of hover spotlighting.
+
+
 
 
 

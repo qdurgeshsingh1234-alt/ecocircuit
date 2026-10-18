@@ -232,7 +232,15 @@ export default function ScrollCanvasAnimation({
         </div>
       )}
 
-      {/* Hi-DPI canvas — covers full sticky viewport */}
+      {/* Studio ambient glow behind canvas to eliminate harsh rectangular bounds */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center"
+        aria-hidden="true"
+      >
+        <div className="w-[720px] h-[520px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(181,101,45,0.2)_0%,rgba(47,78,58,0.14)_45%,rgba(20,23,15,0)_75%)] blur-3xl" />
+      </div>
+
+      {/* Hi-DPI canvas — covers full sticky viewport with elliptical radial mask */}
       <canvas
         ref={canvasRef}
         style={{
@@ -241,13 +249,17 @@ export default function ScrollCanvasAnimation({
           left: 0,
           display: 'block',
           pointerEvents: 'none',
-          opacity: 0.92,
+          opacity: 0.94,
           mixBlendMode: 'screen',
           zIndex: 1,
+          WebkitMaskImage:
+            'radial-gradient(ellipse 48% 56% at 50% 50%, rgba(0,0,0,1) 28%, rgba(0,0,0,0.8) 45%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 70%)',
+          maskImage:
+            'radial-gradient(ellipse 48% 56% at 50% 50%, rgba(0,0,0,1) 28%, rgba(0,0,0,0.8) 45%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 70%)',
         }}
       />
 
-      {/* Cinematic Vignettes to eliminate harsh left/right/bottom canvas seams */}
+      {/* Cinematic Vignettes to softly feather edge boundaries */}
       <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#14170F] to-transparent z-10" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#14170F] to-transparent z-10" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#14170F] to-transparent z-10" />

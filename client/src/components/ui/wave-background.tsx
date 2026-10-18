@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useEffect, useRef } from 'react';
 import { createNoise2D } from 'simplex-noise';
 
@@ -6,12 +5,6 @@ interface Point {
   x: number;
   y: number;
   wave: { x: number; y: number };
-  cursor: {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-  };
 }
 
 interface WavesProps {
@@ -24,267 +17,217 @@ interface WavesProps {
 
 export function Waves({
   className = '',
-  strokeColor = 'rgba(181, 101, 45, 0.18)',
   backgroundColor = 'transparent',
-  pointerSize = 0.65,
   variant = 'light',
 }: WavesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({
-    x: -100,
-    y: -100,
-    lx: 0,
-    ly: 0,
-    sx: -100,
-    sy: -100,
-    v: 0,
-    vs: 0,
-    a: 0,
-    set: false,
+    x: -500,
+    y: -500,
+    sx: -500,
+    sy: -500,
+    glowX: -500,
+    glowY: -500,
   });
-  const pathsRef = useRef<SVGPathElement[]>([]);
-  const linesRef = useRef<Point[][]>([]);
   const noiseRef = useRef<((x: number, y: number) => number) | null>(null);
   const rafRef = useRef<number | null>(null);
-  const boundingRef = useRef<DOMRect | null>(null);
+  const gridRef = useRef<Point[][]>([]);
 
   useEffect(() => {
-    if (!containerRef.current || !svgRef.current) return;
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
 
     noiseRef.current = createNoise2D();
-    setSize();
-    setLines();
 
-    window.addEventListener('resize', onResize);
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    const handleResize = () => {
+      if (!canvas || !container) return;
+      const rect = container.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
 
-    rafRef.current = requestAnimationFrame(tick);
+      buildGrid(rect.width, rect.height);
+    };
+
+    const buildGrid = (w: number, h: number) => {
+      const xGap = 40;
+      const yGap = 22;
+      const extraX = 160;
+      const extraY = 80;
+
+      const totalLines = Math.ceil((w + extraX) / xGap);
+      const totalPoints = Math.ceil((h + extraY) / yGap);
+
+      const xStart = (w - xGap * totalLines) / 2;
+      const yStart = (h - yGap * totalPoints) / 2;
+
+      const lines: Point[][] = [];
+      for (let i = 0; i < totalLines; i++) {
+        const pts: Point[] = [];
+        for (let j = 0; j < totalPoints; j++) {
+          pts.push({
+            x: xStart + xGap * i,
+            y: yStart + yGap * j,
+            wave: { x: 0, y: 0 },
+          });
+        }
+        lines.push(pts);
+      }
+      gridRef.current = lines;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      mouseRef.current.x = e.clientX - rect.left;
+      mouseRef.current.y = e.clientY - rect.top;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!e.touches[0] || !container) return;
+      const rect = container.getBoundingClientRect();
+      mouseRef.current.x = e.touches[0].clientX - rect.left;
+      mouseRef.current.y = e.touches[0].clientY - rect.top;
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    const render = (time: number) => {
+      const ctx = canvas.getContext('2d');
+      if (!ctx || !noiseRef.current) return;
+
+      const rect = container.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      const m = mouseRef.current;
+      // Instant, responsive lerp smoothing: 0.65 for magnetic wave, 0.85 for glow
+      m.sx += (m.x - m.sx) * 0.65;
+      m.sy += (m.y - m.sy) * 0.65;
+      m.glowX += (m.x - m.glowX) * 0.85;
+      m.glowY += (m.y - m.glowY) * 0.85;
+
+      // Soft ambient proximity spotlight at cursor
+      if (m.glowX > -200 && m.glowX < rect.width + 200) {
+        const grad = ctx.createRadialGradient(m.glowX, m.glowY, 0, m.glowX, m.glowY, 260);
+        grad.addColorStop(0, 'rgba(181, 101, 45, 0.08)');
+        grad.addColorStop(0.45, 'rgba(107, 143, 113, 0.035)');
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, rect.width, rect.height);
+      }
+
+      const noise = noiseRef.current;
+      const t = time * 0.00035;
+      const lines = gridRef.current;
+      const isDark = variant === 'dark';
+
+      // Base line stroke color
+      const baseAlpha = 0.045;
+      const baseColor = isDark
+        ? `rgba(244, 241, 233, ${baseAlpha})`
+        : `rgba(20, 23, 15, ${baseAlpha})`;
+
+      // Draw the submerged silk-circuit lines
+      for (let i = 0; i < lines.length; i++) {
+        const pts = lines[i];
+        if (pts.length < 2) continue;
+
+        // Calculate smooth silk wave displacement
+        for (let j = 0; j < pts.length; j++) {
+          const p = pts[j];
+          const n = noise(p.x * 0.0012 + t, p.y * 0.0012 + t * 0.5);
+          p.wave.x = Math.cos(n * Math.PI * 2) * 14;
+          p.wave.y = Math.sin(n * Math.PI * 2) * 8;
+
+          // Subtle magnetic cursor deflection
+          const dx = p.x - m.sx;
+          const dy = p.y - m.sy;
+          const d = Math.hypot(dx, dy);
+          if (d < 240 && d > 0) {
+            const force = (1 - d / 240) * 12;
+            p.wave.x += (dx / d) * force;
+            p.wave.y += (dy / d) * force;
+          }
+        }
+
+        // Draw segmented lines with local proximity brightening
+        for (let j = 0; j < pts.length - 1; j++) {
+          const p1 = pts[j];
+          const p2 = pts[j + 1];
+
+          const x1 = p1.x + p1.wave.x;
+          const y1 = p1.y + p1.wave.y;
+          const x2 = p2.x + p2.wave.x;
+          const y2 = p2.y + p2.wave.y;
+
+          const midX = (x1 + x2) * 0.5;
+          const midY = (y1 + y2) * 0.5;
+          const dist = Math.hypot(midX - m.sx, midY - m.sy);
+
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+
+          if (dist < 240) {
+            const prox = 1 - dist / 240;
+            const boostAlpha = baseAlpha + prox * 0.14;
+            // Warm copper for even lines, emerald for odd lines
+            ctx.strokeStyle =
+              i % 2 === 0
+                ? `rgba(181, 101, 45, ${boostAlpha})`
+                : `rgba(47, 78, 58, ${boostAlpha})`;
+            ctx.lineWidth = 0.75 + prox * 0.4;
+            ctx.stroke();
+
+            // Micro-circuit node illumination along every 5th vertex inside cursor proximity
+            if (j % 5 === 0) {
+              ctx.beginPath();
+              ctx.arc(x1, y1, 1.5, 0, Math.PI * 2);
+              ctx.fillStyle =
+                i % 2 === 0
+                  ? `rgba(181, 101, 45, ${prox * 0.45})`
+                  : `rgba(107, 143, 113, ${prox * 0.45})`;
+              ctx.fill();
+            }
+          } else {
+            ctx.strokeStyle = baseColor;
+            ctx.lineWidth = 0.75;
+            ctx.stroke();
+          }
+        }
+      }
+
+      ctx.restore();
+      rafRef.current = requestAnimationFrame(render);
+    };
+
+    rafRef.current = requestAnimationFrame(render);
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [strokeColor]);
-
-  const setSize = () => {
-    if (!containerRef.current || !svgRef.current) return;
-    boundingRef.current = containerRef.current.getBoundingClientRect();
-    const { width, height } = boundingRef.current;
-    svgRef.current.style.width = `${width}px`;
-    svgRef.current.style.height = `${height}px`;
-  };
-
-  const setLines = () => {
-    if (!svgRef.current || !boundingRef.current) return;
-
-    const { width, height } = boundingRef.current;
-    linesRef.current = [];
-
-    pathsRef.current.forEach((path) => path.remove());
-    pathsRef.current = [];
-
-    const xGap = 18;
-    const yGap = 18;
-
-    const oWidth = width + 160;
-    const oHeight = height + 40;
-
-    const totalLines = Math.ceil(oWidth / xGap);
-    const totalPoints = Math.ceil(oHeight / yGap);
-
-    const xStart = (width - xGap * totalLines) / 2;
-    const yStart = (height - yGap * totalPoints) / 2;
-
-    for (let i = 0; i < totalLines; i++) {
-      const points: Point[] = [];
-      for (let j = 0; j < totalPoints; j++) {
-        points.push({
-          x: xStart + xGap * i,
-          y: yStart + yGap * j,
-          wave: { x: 0, y: 0 },
-          cursor: { x: 0, y: 0, vx: 0, vy: 0 },
-        });
-      }
-
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.classList.add('a__line', 'js-line');
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', i % 3 === 0 ? 'rgba(47, 78, 58, 0.16)' : strokeColor);
-      path.setAttribute('stroke-width', '1.1');
-
-      svgRef.current.appendChild(path);
-      pathsRef.current.push(path);
-      linesRef.current.push(points);
-    }
-  };
-
-  const onResize = () => {
-    setSize();
-    setLines();
-  };
-
-  const onMouseMove = (e: MouseEvent) => {
-    updateMousePosition(e.clientX, e.clientY);
-  };
-
-  const onTouchMove = (e: TouchEvent) => {
-    if (!e.touches[0]) return;
-    updateMousePosition(e.touches[0].clientX, e.touches[0].clientY);
-  };
-
-  const updateMousePosition = (x: number, y: number) => {
-    if (!boundingRef.current) return;
-    const mouse = mouseRef.current;
-    mouse.x = x - boundingRef.current.left;
-    mouse.y = y - boundingRef.current.top;
-
-    if (!mouse.set) {
-      mouse.sx = mouse.x;
-      mouse.sy = mouse.y;
-      mouse.lx = mouse.x;
-      mouse.ly = mouse.y;
-      mouse.set = true;
-    }
-
-    if (containerRef.current) {
-      containerRef.current.style.setProperty('--x', `${mouse.sx}px`);
-      containerRef.current.style.setProperty('--y', `${mouse.sy}px`);
-    }
-  };
-
-  const movePoints = (time: number) => {
-    const { current: lines } = linesRef;
-    const { current: mouse } = mouseRef;
-    const { current: noise } = noiseRef;
-    if (!noise) return;
-
-    lines.forEach((points) => {
-      points.forEach((p: Point) => {
-        const move =
-          noise((p.x + time * 0.008) * 0.003, (p.y + time * 0.003) * 0.002) * 8;
-
-        p.wave.x = Math.cos(move) * 12;
-        p.wave.y = Math.sin(move) * 6;
-
-        const dx = p.x - mouse.sx;
-        const dy = p.y - mouse.sy;
-        const d = Math.hypot(dx, dy);
-        const l = Math.max(190, mouse.vs);
-
-        if (d < l) {
-          const s = 1 - d / l;
-          const f = Math.cos(d * 0.001) * s;
-          p.cursor.vx += Math.cos(mouse.a) * f * l * mouse.vs * 0.00042;
-          p.cursor.vy += Math.sin(mouse.a) * f * l * mouse.vs * 0.00042;
-        }
-
-        p.cursor.vx += (0 - p.cursor.x) * 0.012;
-        p.cursor.vy += (0 - p.cursor.y) * 0.012;
-        p.cursor.vx *= 0.94;
-        p.cursor.vy *= 0.94;
-
-        p.cursor.x += p.cursor.vx;
-        p.cursor.y += p.cursor.vy;
-
-        p.cursor.x = Math.min(55, Math.max(-55, p.cursor.x));
-        p.cursor.y = Math.min(55, Math.max(-55, p.cursor.y));
-      });
-    });
-  };
-
-  const moved = (point: Point, withCursorForce = true) => ({
-    x: point.x + point.wave.x + (withCursorForce ? point.cursor.x : 0),
-    y: point.y + point.wave.y + (withCursorForce ? point.cursor.y : 0),
-  });
-
-  const drawLines = () => {
-    const { current: lines } = linesRef;
-    const { current: paths } = pathsRef;
-
-    lines.forEach((points, lIndex) => {
-      if (points.length < 2 || !paths[lIndex]) return;
-      const firstPoint = moved(points[0], false);
-      let d = `M ${firstPoint.x} ${firstPoint.y}`;
-      for (let i = 1; i < points.length; i++) {
-        const current = moved(points[i]);
-        d += `L ${current.x} ${current.y}`;
-      }
-      paths[lIndex].setAttribute('d', d);
-    });
-  };
-
-  const tick = (time: number) => {
-    const { current: mouse } = mouseRef;
-
-    mouse.sx += (mouse.x - mouse.sx) * 0.12;
-    mouse.sy += (mouse.y - mouse.sy) * 0.12;
-
-    const dx = mouse.x - mouse.lx;
-    const dy = mouse.y - mouse.ly;
-    const d = Math.hypot(dx, dy);
-
-    mouse.v = d;
-    mouse.vs += (d - mouse.vs) * 0.1;
-    mouse.vs = Math.min(100, mouse.vs);
-
-    mouse.lx = mouse.x;
-    mouse.ly = mouse.y;
-    mouse.a = Math.atan2(dy, dx);
-
-    if (containerRef.current) {
-      containerRef.current.style.setProperty('--x', `${mouse.sx}px`);
-      containerRef.current.style.setProperty('--y', `${mouse.sy}px`);
-    }
-
-    movePoints(time);
-    drawLines();
-
-    rafRef.current = requestAnimationFrame(tick);
-  };
+  }, [variant]);
 
   return (
     <div
       ref={containerRef}
       className={`waves-component pointer-events-none select-none overflow-hidden ${className}`}
-      style={
-        {
-          backgroundColor,
-          '--x': '-100px',
-          '--y': '50%',
-        } as React.CSSProperties
-      }
+      style={{ backgroundColor }}
     >
-      {/* Dynamic Cursor Ambient Halo */}
-      <div
-        className="pointer-events-none absolute inset-0 transition-opacity duration-300"
-        style={{
-          background:
-            variant === 'dark'
-              ? 'radial-gradient(650px circle at var(--x) var(--y), rgba(181, 101, 45, 0.16), rgba(47, 78, 58, 0.12) 40%, transparent 75%)'
-              : 'radial-gradient(600px circle at var(--x) var(--y), rgba(181, 101, 45, 0.18), rgba(47, 78, 58, 0.12) 45%, transparent 75%)',
-        }}
-      />
-      <svg ref={svgRef} className="block w-full h-full js-svg relative z-10" xmlns="http://www.w3.org/2000/svg" />
-      <div
-        className="pointer-dot z-20"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: `${pointerSize}rem`,
-          height: `${pointerSize}rem`,
-          background: '#B5652D',
-          boxShadow: '0 0 16px 4px rgba(181, 101, 45, 0.55)',
-          borderRadius: '50%',
-          transform: 'translate3d(calc(var(--x) - 50%), calc(var(--y) - 50%), 0)',
-          willChange: 'transform',
-        }}
-      />
+      <canvas ref={canvasRef} className="block w-full h-full pointer-events-none" />
     </div>
   );
 }
-

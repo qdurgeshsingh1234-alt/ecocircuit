@@ -127,6 +127,7 @@ export default function Landing() {
             className="absolute inset-0 z-0 opacity-45 pointer-events-none"
             strokeColor="rgba(181, 101, 45, 0.22)"
             variant="dark"
+            backgroundColor="transparent"
           />
 
           {/* Canvas scroll animation — fills full sticky viewport */}
@@ -165,31 +166,32 @@ export default function Landing() {
 
           {/* Hero text content */}
           <motion.div
-            style={{ y: heroTextY, opacity: heroOpacity, position: 'relative', zIndex: 10, height: '100%', display: 'flex', alignItems: 'center' }}
+            style={{ y: heroTextY, opacity: heroOpacity }}
+            className="relative z-10 h-full flex items-center pt-24 md:pt-0 pb-12 md:pb-0"
           >
             <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 w-full">
               <div style={{ maxWidth: '42rem' }}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 0.75rem', borderRadius: '9999px', border: '1px solid color-mix(in srgb, var(--signal) 30%, transparent)', background: 'color-mix(in srgb, var(--signal) 10%, transparent)', marginBottom: '1.25rem' }}
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#B5652D]/40 bg-[#14170F]/85 backdrop-blur-md mb-5"
                 >
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--signal)', animation: 'pulse 2s infinite' }} />
-                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--signal)', letterSpacing: '0.05em' }}>Campus E-Waste Management — LPU, Phagwara</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#B5652D] animate-pulse" />
+                  <span className="text-xs font-mono font-medium text-[#E4DCC6] tracking-wider uppercase">Campus E-Waste Management — LPU, Phagwara</span>
                 </motion.div>
 
                 <motion.h1
                   initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1 }}
-                  style={{ color: 'var(--paper)', marginBottom: '1.5rem' }}
+                  className="text-4xl sm:text-5xl lg:text-6xl font-heading font-semibold text-[#F4F1E9] leading-[1.12] mb-6"
                 >
                   The world generated{' '}
-                  <span style={{ color: 'var(--copper)', position: 'relative' }}>62 million tonnes</span>{' '}
+                  <span className="text-[#B5652D] relative underline decoration-[#B5652D]/40 underline-offset-8">62 million tonnes</span>{' '}
                   of e-waste last year.{' '}
-                  <span style={{ color: 'color-mix(in srgb, var(--paper) 80%, transparent)' }}>Only 22% was recycled.</span>
+                  <span className="text-[#E4DCC6]/85 font-normal">Only 22% was recycled.</span>
                 </motion.h1>
 
                 <motion.p
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25 }}
-                  style={{ fontSize: '1.125rem', color: 'color-mix(in srgb, var(--paper) 60%, transparent)', maxWidth: '32rem', lineHeight: 1.7, marginBottom: '2rem' }}
+                  className="text-lg text-[#E4DCC6]/85 max-w-xl leading-relaxed mb-8"
                 >
                   EcoCircuit helps LPU students and staff safely dispose of dead phones, chargers, laptops, and more — from your hostel drawer to responsible recycling.
                 </motion.p>
@@ -200,7 +202,7 @@ export default function Landing() {
                 >
                   <Link to="/pickup"><Button size="lg" variant="primary">Request a Collection <ArrowRight size={16} /></Button></Link>
                   <Link to="/guide">
-                    <Button size="lg" variant="ghost" className="!text-[var(--paper)] !border-white/20 hover:!bg-white/8">
+                    <Button size="lg" variant="ghost" className="!text-[#F4F1E9] !border-white/25 hover:!bg-white/10">
                       See How It Works
                     </Button>
                   </Link>
@@ -208,14 +210,14 @@ export default function Landing() {
 
                 <motion.div
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.7 }}
-                  style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}
+                  className="flex flex-wrap gap-4 text-xs font-mono text-[#E4DCC6]/75"
                 >
                   {trustBadges.map((badge) => {
                     const Icon = badge.icon;
                     return (
-                      <div key={badge.text} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Icon size={14} style={{ color: 'var(--signal)' }} />
-                        <span style={{ fontSize: '0.75rem', color: 'color-mix(in srgb, var(--paper) 50%, transparent)' }}>{badge.text}</span>
+                      <div key={badge.text} className="flex items-center gap-1.5">
+                        <Icon size={14} className="text-[#6B8F71]" />
+                        <span>{badge.text}</span>
                       </div>
                     );
                   })}
@@ -224,10 +226,12 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          {/* Scroll indicator */}
+          {/* Scroll indicator (desktop only) */}
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.8 }}
-            style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem', color: 'color-mix(in srgb, var(--paper) 35%, transparent)', zIndex: 10 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.4, duration: 0.8 }}
+            className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 flex-col items-center gap-1 text-white/35 z-10"
           >
             <span style={{ fontSize: '0.625rem', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Scroll</span>
             <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}>
@@ -237,9 +241,16 @@ export default function Landing() {
         </section>
       </div>
 
-      {/* ── Stats strip ── */}
-      <section className="py-16 relative overflow-hidden" style={{ backgroundColor: 'var(--moss)' }}>
+      {/* ── Stats strip: commanding dark architectural container ── */}
+      <section className="py-14 relative overflow-hidden bg-[#14170F] text-[#F4F1E9] border-y border-[#B5652D]/30 shadow-2xl">
         <div className="max-w-content mx-auto px-4 md:px-6 relative z-10">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-8 pb-4 border-b border-white/10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono tracking-wider uppercase bg-[#B5652D]/15 text-[#E4DCC6] border border-[#B5652D]/35">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#B5652D] animate-pulse" />
+              Sample Campus Projections & Global Context
+            </div>
+            <span className="text-xs text-[#E4DCC6]/60 font-mono">UNITAR / ITU / WHO / LPU Baseline Data</span>
+          </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {stats.map((stat, i) => <StatCounter key={i} {...stat} />)}
           </div>
@@ -247,23 +258,62 @@ export default function Landing() {
       </section>
 
       {/* ── Action cards ── */}
-      <section className="section-pad" style={{ backgroundColor: 'var(--paper)' }}>
+      <section className="section-pad relative bg-[#F4F1E9]/88 backdrop-blur-[1px] border-b border-[#14170F]/10">
         <div className="max-w-content mx-auto px-4 md:px-6">
-          <SectionHeading eyebrow="Take action" title="Three ways to make a difference" subtitle="Whether you want to learn, locate a drop-off, or request a collection — start wherever makes sense." />
+          <SectionHeading
+            eyebrow="Take action"
+            title="Three ways to make a difference"
+            subtitle="Whether you want to learn, locate a drop-off, or request a collection — start wherever makes sense."
+          />
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
             {actionCards.map((card, i) => {
               const Icon = card.icon;
               return (
                 <Reveal key={card.to} delay={i * 0.12}>
                   <Link to={card.to} className="block h-full group">
-                    <div className={`h-full p-8 rounded-2xl border transition-all duration-300 card-3d-tactile ${card.theme}`}>
-                      <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: card.color + '18', color: card.color, marginBottom: '1.25rem' }}>
-                        <Icon size={22} />
+                    <div className="h-full p-8 rounded-2xl bg-[#FAF8F3]/95 border border-[#14170F]/12 hover:border-[#B5652D]/40 transition-all duration-300 card-3d-tactile shadow-sm hover:shadow-md flex flex-col justify-between">
+                      <div>
+                        <div
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: card.color + '18',
+                            color: card.color,
+                            marginBottom: '1.25rem',
+                          }}
+                        >
+                          <Icon size={22} />
+                        </div>
+                        <p
+                          style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.15em',
+                            textTransform: 'uppercase',
+                            color: card.color,
+                            marginBottom: '0.5rem',
+                            fontFamily: 'var(--font-mono, monospace)',
+                          }}
+                        >
+                          {card.eyebrow}
+                        </p>
+                        <h3 className="text-xl font-bold font-heading text-[#14170F] mb-2">{card.title}</h3>
+                        <p className="text-sm text-[#14170F]/75 leading-relaxed mb-6">{card.body}</p>
                       </div>
-                      <p style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: card.color, marginBottom: '0.5rem', fontFamily: 'var(--font-mono, monospace)' }}>{card.eyebrow}</p>
-                      <h3 style={{ color: 'var(--ink)', marginBottom: '0.5rem', fontFamily: 'var(--font-heading)' }} className="text-xl font-bold">{card.title}</h3>
-                      <p style={{ fontSize: '0.875rem', color: 'color-mix(in srgb, var(--ink) 70%, transparent)', lineHeight: 1.7, marginBottom: '1.25rem' }}>{card.body}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: card.color }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: card.color,
+                        }}
+                      >
                         {card.cta} <ArrowRight size={14} className="group-hover:translate-x-1.5 transition-transform" />
                       </div>
                     </div>
@@ -276,26 +326,39 @@ export default function Landing() {
       </section>
 
       {/* ── How it works timeline ── */}
-      <section className="section-pad" style={{ backgroundColor: 'var(--sand)' }}>
+      <section className="section-pad relative bg-[#EFECE2]/90 backdrop-blur-[1px] border-b border-[#14170F]/10">
         <div className="max-w-content mx-auto px-4 md:px-6">
-          <SectionHeading eyebrow="The process" title="How EcoCircuit works" subtitle="Four steps that close the loop on your e-waste — from your hostel drawer to responsible recycling." align="center" />
-          <div className="mt-16"><HowItWorksTimeline /></div>
+          <SectionHeading
+            eyebrow="The process"
+            title="How EcoCircuit works"
+            subtitle="Four steps that close the loop on your e-waste — from your hostel drawer to responsible recycling."
+            align="center"
+          />
+          <div className="mt-14"><HowItWorksTimeline /></div>
         </div>
       </section>
 
       {/* ── Impact section ── */}
-      <section className="section-pad" style={{ backgroundColor: 'var(--paper)' }}>
+      <section className="section-pad relative bg-[#F4F1E9]/88 backdrop-blur-[1px] border-b border-[#14170F]/10">
         <div className="max-w-content mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <Reveal direction="left">
-              <SectionHeading eyebrow="Your impact, measured" title="Every kg diverted is a kg of lead kept out of groundwater" subtitle="E-waste contains over 60 hazardous substances. EcoCircuit connects the LPU community to certified processors who recover these materials safely." />
+              <SectionHeading
+                eyebrow="Your impact, measured"
+                title="Every kg diverted is a kg of lead kept out of groundwater"
+                subtitle="E-waste contains over 60 hazardous substances. EcoCircuit connects the LPU community to certified processors who recover these materials safely."
+              />
               <div className="mt-8 space-y-4">
-                {[['1 laptop recycled', '~4.5 kg diverted from informal disposal (UN Global E-waste Monitor 2024)'], ['1 old TV', '~22 kg including up to 2 kg of lead (Basel Action Network)'], ['10 mobile phones', '~34g gold & 350g silver recovered safely (US EPA e-cycling estimates)']].map(([item, impact]) => (
-                  <div key={item} className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: 'var(--sand)' }}>
-                    <div style={{ width: 6, height: 6, marginTop: 8, borderRadius: '50%', backgroundColor: 'var(--signal)', flexShrink: 0 }} />
+                {[
+                  ['1 laptop recycled', '~4.5 kg diverted from informal disposal (UN Global E-waste Monitor 2024)'],
+                  ['1 old TV', '~22 kg including up to 2 kg of lead (Basel Action Network)'],
+                  ['10 mobile phones', '~34g gold & 350g silver recovered safely (US EPA e-cycling estimates)'],
+                ].map(([item, impact]) => (
+                  <div key={item} className="flex items-start gap-3 p-4 rounded-xl bg-[#FAF8F3]/90 border border-[#14170F]/10 shadow-sm">
+                    <div style={{ width: 8, height: 8, marginTop: 6, borderRadius: '50%', backgroundColor: 'var(--signal)', flexShrink: 0 }} />
                     <div>
-                      <p style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--ink)' }}>{item}</p>
-                      <p style={{ fontSize: '0.75rem', color: 'color-mix(in srgb, var(--ink) 55%, transparent)', marginTop: 2 }}>{impact}</p>
+                      <p className="text-sm font-semibold text-[#14170F]">{item}</p>
+                      <p className="text-xs text-[#14170F]/70 mt-1">{impact}</p>
                     </div>
                   </div>
                 ))}
@@ -304,9 +367,18 @@ export default function Landing() {
             <Reveal direction="right">
               <div style={{ position: 'relative', height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {[0, 1, 2].map((i) => (
-                  <motion.div key={i} style={{ position: 'absolute', borderRadius: '50%', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)', width: `${40 + i * 28}%`, height: `${40 + i * 28}%` }}
+                  <motion.div
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      borderRadius: '50%',
+                      border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)',
+                      width: `${40 + i * 28}%`,
+                      height: `${40 + i * 28}%`,
+                    }}
                     animate={{ scale: [1, 1.04, 1], opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ duration: 3 + i * 0.8, repeat: Infinity, delay: i * 0.6, ease: 'easeInOut' }} />
+                    transition={{ duration: 3 + i * 0.8, repeat: Infinity, delay: i * 0.6, ease: 'easeInOut' }}
+                  />
                 ))}
                 <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '2rem', backgroundColor: 'var(--moss)', borderRadius: '1rem', boxShadow: '0 25px 50px color-mix(in srgb, var(--moss) 30%, transparent)' }}>
                   <div style={{ fontSize: '3rem', fontWeight: 600, color: 'var(--paper)', fontFamily: 'var(--font-heading)' }}>65.5</div>
@@ -324,21 +396,21 @@ export default function Landing() {
       </section>
 
       {/* ── CTA strip ── */}
-      <section className="section-pad relative overflow-hidden" style={{ backgroundColor: 'var(--ink)' }}>
+      <section className="section-pad relative overflow-hidden bg-[#14170F] text-[#F4F1E9]">
         <div className="absolute inset-0 opacity-[0.08] pointer-events-none">
           <CircuitBg className="w-full h-full" style={{ color: 'var(--signal)' } as React.CSSProperties} />
         </div>
         <div className="max-w-content mx-auto px-4 md:px-6 text-center relative z-10">
           <Reveal>
             <p style={{ fontSize: '0.7rem', fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--signal)', marginBottom: '0.75rem' }}>Ready to start?</p>
-            <h2 style={{ color: 'var(--paper)' }}>Your old phone is worth more than landfill.</h2>
-            <p style={{ marginTop: '1rem', color: 'color-mix(in srgb, var(--paper) 55%, transparent)', maxWidth: '28rem', margin: '1rem auto 0', lineHeight: 1.7 }}>
+            <h2 className="text-3xl sm:text-4xl font-heading font-semibold text-[#F4F1E9]">Your old phone is worth more than landfill.</h2>
+            <p className="mt-4 text-[#E4DCC6]/75 max-w-md mx-auto leading-relaxed">
               Request a collection for your hostel or department in under two minutes. Every device responsibly recycled keeps hazardous metals out of soil and groundwater.
             </p>
-            <div style={{ marginTop: '2rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
+            <div className="mt-8 flex flex-wrap gap-3 justify-center">
               <Link to="/pickup"><Button size="lg" variant="primary">Request a Collection <ArrowRight size={16} /></Button></Link>
               <Link to="/centers">
-                <Button size="lg" variant="ghost" className="!text-[var(--paper)] !border-white/20 hover:!bg-white/8">
+                <Button size="lg" variant="ghost" className="!text-[#F4F1E9] !border-white/25 hover:!bg-white/10">
                   <MapPin size={16} /> Find Drop-off Points
                 </Button>
               </Link>
