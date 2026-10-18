@@ -161,6 +161,21 @@ Project notes and viva explanations for each verified roadmap stage of EcoCircui
 4. **How it was tested:** Built client production bundle with `npm --prefix client run build` confirming 0 TypeScript errors; verified with Playwright across `/`, `/guide`, and `/centers` at 1440px desktop and 375px mobile; inspected scroll positions at 0%, 25%, Stats, Action Cards, How It Works grid, Impact, and CTA; verified zero console errors; and saved full-resolution screenshots in `docs/screenshots/silk_waves_*.png`.
 5. **Remaining limitations:** Wave canvas rendering pauses off-screen computation when component unmounts; mobile devices receive responsive touch-drag wave interaction instead of hover spotlighting.
 
+---
+
+## Stage N: Full-Stack Vercel Serverless Architecture & State Synchronization
+
+1. **What it does:** Prepares EcoCircuit for seamless zero-config full-stack deployment on Vercel, allowing the React frontend and all `/api/*` backend routes (`/api/health`, `/api/centers`, `/api/pickups`, `/api/pickups/all`, `POST /api/pickups`, `PATCH /api/pickups/:id`) to run harmoniously under a single clean domain without CORS friction, while preserving local development workflows.
+2. **How it works:**
+   - **Production Serverless API (`api/index.ts`):** Implements a lightweight, self-contained Vercel Serverless Function at the repo root. Eliminates binary dependencies (such as `mongodb-memory-server`) that cannot run in serverless container environments, embedding verified LPU campus collection centers, sample campus pickup requests, and GEM 2024 environmental impact calculations.
+   - **Zero-Latency Client Persistence (`client/src/utils/pickupStorage.ts`):** Synchronizes new pickup submissions and status transitions into browser `localStorage` (`ecocircuit_custom_pickups` and `ecocircuit_status_overrides`), merging seamlessly with API responses across serverless cold starts and user navigation.
+   - **Unified Deployment Routing (`vercel.json`):** Configures single-domain rewrites routing `/api/*` requests to the serverless function and all other routes to `client/dist/index.html` for client-side SPA routing.
+   - **Client API Relative Endpoints:** Audited and verified all `fetch` calls across `Centers.tsx`, `Pickup.tsx`, `Dashboard.tsx`, and `Admin.tsx` use relative `/api/...` paths.
+3. **Important files:** `api/index.ts` (Vercel serverless API function), `client/src/utils/pickupStorage.ts` (client persistence engine), `vercel.json` (Vercel build and rewrite configuration), `client/src/pages/Pickup.tsx`, `client/src/pages/Dashboard.tsx`, `client/src/pages/Admin.tsx`.
+4. **How it was tested:** Built both `client` (`npm --prefix client run build`) and `server` (`npm --prefix server run build`) with 0 errors; verified API routing and TypeScript types; verified local persistence fallback; staged and committed all files for remote GitHub deployment.
+5. **Remaining limitations:** For a permanent production database, the in-memory serverless store can be connected directly to MongoDB Atlas via a `MONGODB_URI` environment variable.
+
+
 
 
 

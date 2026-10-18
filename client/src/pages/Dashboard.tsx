@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { Mail, Leaf, Wind, Package, Clock, CheckCircle2, AlertCircle, ChevronRight, LogOut, Info } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { mergePickupsWithLocal } from '../utils/pickupStorage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,7 @@ interface PickupRecord {
   preferredWindow: string;
   contactName: string;
   contactEmail: string;
+  contactPhone?: string;
   status: 'requested' | 'scheduled' | 'collected';
   estimatedImpactKg: number;
   createdAt: string;
@@ -639,11 +641,25 @@ export default function Dashboard() {
     try {
       const res = await fetch(`/api/pickups?email=${encodeURIComponent(targetEmail)}`);
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load data');
-      setPickups(json.data as PickupRecord[]);
+      const apiList: PickupRecord[] = (res.ok && json.success && Array.isArray(json.data)) ? json.data : [];
+      const merged = mergePickupsWithLocal(apiList);
+      const userPickups = merged.filter(
+        (p) => p.contactEmail.trim().toLowerCase() === targetEmail.trim().toLowerCase()
+      );
+      setPickups(userPickups);
       sessionStorage.setItem('ecocircuit_dashboard_email', targetEmail);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      // Fallback to local storage if API error or serverless cold start
+      const merged = mergePickupsWithLocal([]);
+      const userPickups = merged.filter(
+        (p) => p.contactEmail.trim().toLowerCase() === targetEmail.trim().toLowerCase()
+      );
+      if (userPickups.length > 0) {
+        setPickups(userPickups);
+        sessionStorage.setItem('ecocircuit_dashboard_email', targetEmail);
+      } else {
+        setError(err instanceof Error ? err.message : 'Something went wrong');
+      }
     } finally {
       setLoading(false);
     }

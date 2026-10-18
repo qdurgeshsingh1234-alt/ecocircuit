@@ -7,6 +7,7 @@ import {
   Monitor, Smartphone, Battery, Refrigerator, Cpu, Lightbulb, Cable,
   Sparkles, QrCode
 } from 'lucide-react';
+import { saveCustomPickup } from '../utils/pickupStorage';
 
 // ── Category Configuration with Accurate Hazard Badges ────────────────────────
 interface CategoryConfig {
@@ -321,10 +322,31 @@ export default function Pickup() {
         throw new Error(json.error || 'Failed to submit pickup request.');
       }
 
+      const returnedId = json.data._id || `local_${json.data.trackingId}`;
+      const returnedTrackingId = json.data.trackingId;
+      const returnedImpact = json.data.estimatedImpactKg ?? telemetry.massKg;
+      const returnedStatus = json.data.status || 'requested';
+
+      // Persist to localStorage for serverless continuity
+      saveCustomPickup({
+        _id: returnedId,
+        trackingId: returnedTrackingId,
+        categories: payload.categories,
+        quantity: payload.quantity,
+        address: payload.address,
+        preferredWindow: payload.preferredWindow,
+        contactName: payload.contactName,
+        contactEmail: payload.contactEmail,
+        contactPhone: payload.contactPhone,
+        status: returnedStatus,
+        estimatedImpactKg: returnedImpact,
+        createdAt: json.data.createdAt || new Date().toISOString(),
+      });
+
       setSubmittedData({
-        trackingId: json.data.trackingId,
-        estimatedImpactKg: json.data.estimatedImpactKg ?? telemetry.massKg,
-        status: json.data.status || 'requested',
+        trackingId: returnedTrackingId,
+        estimatedImpactKg: returnedImpact,
+        status: returnedStatus,
       });
       setCurrentStep(6);
       window.scrollTo({ top: 80, behavior: 'smooth' });

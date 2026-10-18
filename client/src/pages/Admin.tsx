@@ -19,6 +19,7 @@ import {
   LayoutGrid,
   Kanban,
 } from 'lucide-react';
+import { mergePickupsWithLocal, saveStatusOverride } from '../utils/pickupStorage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type PickupStatus = 'requested' | 'scheduled' | 'collected';
@@ -32,7 +33,7 @@ interface PickupRecord {
   preferredWindow: string;
   contactName: string;
   contactEmail: string;
-  contactPhone: string;
+  contactPhone?: string;
   status: PickupStatus;
   estimatedImpactKg: number;
   createdAt: string;
@@ -462,10 +463,16 @@ export default function Admin() {
     try {
       const res = await fetch('/api/pickups/all');
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Failed to load pickups');
-      setPickups(json.data as PickupRecord[]);
+      const apiList: PickupRecord[] = (res.ok && json.success && Array.isArray(json.data)) ? json.data : [];
+      const merged = mergePickupsWithLocal(apiList);
+      setPickups(merged);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error fetching collection requests');
+      const merged = mergePickupsWithLocal([]);
+      if (merged.length > 0) {
+        setPickups(merged);
+      } else {
+        setError(err instanceof Error ? err.message : 'Error fetching collection requests');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -482,9 +489,13 @@ export default function Admin() {
     if (updatingId) return;
     setUpdatingId(id);
 
+    // Save status override locally immediately for zero-latency persistence
+    saveStatusOverride(id, nextStatus);
+    saveStatusOverride(trackingId, nextStatus);
+
     const previousPickups = [...pickups];
     setPickups((prev) =>
-      prev.map((item) => (item._id === id ? { ...item, status: nextStatus } : item))
+      prev.map((item) => (item._id === id || item.trackingId === trackingId ? { ...item, status: nextStatus } : item))
     );
 
     try {
@@ -497,7 +508,7 @@ export default function Admin() {
       if (!res.ok) throw new Error(json.error ?? 'Failed to update status');
 
       setPickups((prev) =>
-        prev.map((item) => (item._id === id ? (json.data as PickupRecord) : item))
+        prev.map((item) => (item._id === id || item.trackingId === trackingId ? (json.data as PickupRecord) : item))
       );
 
       setToastMessage(`Updated ${trackingId} to ${STATUS_DETAILS[nextStatus].label}`);
@@ -520,7 +531,7 @@ export default function Admin() {
         item.address.toLowerCase().includes(q) ||
         item.contactName.toLowerCase().includes(q) ||
         item.contactEmail.toLowerCase().includes(q) ||
-        item.contactPhone.toLowerCase().includes(q) ||
+        (item.contactPhone ? item.contactPhone.toLowerCase().includes(q) : false) ||
         item.categories.some((cat) => cat.toLowerCase().includes(q));
       return matchesStatus && matchesSearch;
     });
